@@ -12,3 +12,10 @@ with open('puzzle1.sudoku') as file:
 file.close()
 
 print(sudo_list)
+
+for i in range(9):
+    row = sudo_list[i]
+    numbers = row.split(" ")
+    fix = numbers[7]
+    numbers[7] is fix[0]
+    print(numbers)
