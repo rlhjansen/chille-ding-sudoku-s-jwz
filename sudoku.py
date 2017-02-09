@@ -5,3 +5,4 @@ for i in range(3):
     print("JA")
     print("NEE")
     print("urmom")
+    print("harambea")
