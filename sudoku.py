@@ -11,11 +11,13 @@ with open('puzzle1.sudoku') as file:
             sudo_list.append(line)
 file.close()
 
-print(sudo_list)
+sudo_matrix = []
 
 for i in range(9):
     row = sudo_list[i]
-    numbers = row.split(" ")
-    #fix = numbers[8]
-    #numbers[8] = fix[0]
-    print(numbers)
+    numbers = row.split(",")
+    fix = numbers[8]
+    numbers[8] = fix[0]
+    sudo_matrix.append(numbers)
+
+print(sudo_matrix)
