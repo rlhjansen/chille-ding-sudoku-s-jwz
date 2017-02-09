@@ -6,3 +6,4 @@ for i in range(3):
     print("NEE")
     print("urmom")
     print("harambea")
+    print("Can't stop the trump-train")
