@@ -16,6 +16,6 @@ print(sudo_list)
 for i in range(9):
     row = sudo_list[i]
     numbers = row.split(" ")
-    fix = numbers[7]
-    numbers[7] is fix[0]
+    #fix = numbers[8]
+    #numbers[8] = fix[0]
     print(numbers)
