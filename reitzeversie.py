@@ -22,15 +22,15 @@ for j in range(len(sudo_rows[0])):
         column.append(sudo_rows[i][j])
     sudo_columns.append(column)
 
-def positionNeeds(row, column, block):
-    need_list = []
+def positionAllows(row, column, block):
+    allow_list = []
     for i in row:
         if (i in column) & (i in block):
-            need_list.append(i)
-    return need_list
+            allow_list.append(i)
+    return allow_list
 
 #this function makes a list of the numbers that are still missing from the needed numbers 1-9
-def changeToNeeds(List):
+def changeToAllows(List):
     complete = [1,2,3,4,5,6,7,8,9]
     for i in range(len(List)):
         if List[i] in complete:
@@ -65,17 +65,17 @@ for j in range(9):
     sudo_blocks.append(block)
 
 
-sudo_rows_needs = []
+sudo_rows_allows = []
 for j in range(len(sudo_rows)):
-    sudo_rows_needs.append(changeToNeeds(sudo_rows[j]))
+    sudo_rows_allows.append(changeToAllows(sudo_rows[j]))
 
-sudo_columns_needs = []
+sudo_columns_allows = []
 for j in range(len(sudo_columns)):
-    sudo_columns_needs.append(changeToNeeds(sudo_columns[j]))
+    sudo_columns_allows.append(changeToAllows(sudo_columns[j]))
 
-sudo_blocks_needs = []
+sudo_blocks_allows = []
 for j in range(len(sudo_blocks)):
-    sudo_blocks_needs.append(changeToNeeds(sudo_blocks[j]))
+    sudo_blocks_allows.append(changeToAllows(sudo_blocks[j]))
 
 
 # This part makes a new row list of the sudoku.
@@ -94,8 +94,8 @@ for j in range(len(sudo_rows)):
             for k in range(len(blockNumberRange)):
                 if (j in blockNumberRange[1]) & (i in blockNumberRange[0]):
                     f = k
-            possibilities = positionNeeds(sudo_rows_needs[j], sudo_columns_needs[i], sudo_blocks_needs[f])
-            possibility_number = len(positionNeeds(sudo_rows_needs[j], sudo_columns_needs[i], sudo_blocks_needs[f]))
+            possibilities = positionAllows(sudo_rows_allows[j], sudo_columns_allows[i], sudo_blocks_allows[f])
+            possibility_number = len(positionAllows(sudo_rows_allows[j], sudo_columns_allows[i], sudo_blocks_allows[f]))
             if(possibility_number<2)&(possibility_number>0):
                 row.append(possibilities[0])
             else:
@@ -105,7 +105,7 @@ for j in range(len(sudo_rows)):
 print(sudo_rows)
 print(sudo_columns)
 print(sudo_blocks)
-print(sudo_rows_needs)
-print(sudo_columns_needs)
-print(sudo_blocks_needs)
+print(sudo_rows_allows)
+print(sudo_columns_allows)
+print(sudo_blocks_allows)
 print(new_version_rows)
