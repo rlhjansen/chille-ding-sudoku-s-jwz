@@ -11,7 +11,6 @@ with open('puzzle1.sudoku') as file:
             row = line.split(",")
             for i in range(len(row)):
                 row[i] = int(row[i][0])
-
             sudo_rows.append(row)
 file.close()
 
@@ -28,6 +27,19 @@ def positionAllows(row, column, block):
         if (i in column) & (i in block):
             allow_list.append(i)
     return allow_list
+
+
+def containsNoZero(List):
+    pls = True
+    for i in range(List):
+        for j in range(List[i]):
+            if List[i][j] == 0:
+                pls = False
+    return pls
+
+
+
+
 
 #this function makes a list of the numbers that are still missing from the needed numbers 1-9
 def changeToAllows(List):
