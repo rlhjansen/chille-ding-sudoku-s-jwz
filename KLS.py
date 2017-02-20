@@ -84,39 +84,40 @@ for j in range(len(sudo_blocks)):
 
 
 new_version_rows = []
-count_new_assignments = []  # to keep track if new values are assigned
-for j in range(len(sudo_rows)):
-    row = []
-    for i in range(len(sudo_rows[0])):
-        if sudo_rows[j][i] != 0:
-            row.append(sudo_rows[j][i])
-        else:
-            f = 0
-            for k in range(len(blockNumberRange)):
-                if (j in blockNumberRange[1]) & (i in blockNumberRange[0]):
-                    f = k
-                    count_new_assignments.append(1) # +1 assignment done
-            possibilities = positionAllows(sudo_rows_allows[j], sudo_columns_allows[i], sudo_blocks_allows[f])
-            possibility_number = len(positionAllows(sudo_rows_allows[j], sudo_columns_allows[i], sudo_blocks_allows[f]))
-            if(possibility_number<2)&(possibility_number>0):
-                row.append(possibilities[0])
-            else:
+for z in range (500) :
+    count_new_assignments = []  # to keep track if new values are assigned
+    for j in range(len(sudo_rows)):
+        row = []
+        for i in range(len(sudo_rows[0])):
+            if sudo_rows[j][i] != 0:
                 row.append(sudo_rows[j][i])
-    new_version_rows.append(row)
+            else:
+                f = 0
+                for k in range(len(blockNumberRange)):
+                    if (j in blockNumberRange[1]) & (i in blockNumberRange[0]):
+                        f = k
+                        count_new_assignments.append(1) # +1 assignment done
+                possibilities = positionAllows(sudo_rows_allows[j], sudo_columns_allows[i], sudo_blocks_allows[f])
+                possibility_number = len(positionAllows(sudo_rows_allows[j], sudo_columns_allows[i], sudo_blocks_allows[f]))
+                if(possibility_number<2)&(possibility_number>0):
+                    row.append(possibilities[0])
+                else:
+                    row.append(sudo_rows[j][i])
+        new_version_rows.append(row)
 
-# in case no new values were assigned:
-# assign random value to position with least possible new inputs
-if 0 == len(count_new_assignments) :
-    least_possible = positionAllows(sudo_rows[0], sudo_columns[0], sudo_blocks[0])
-    position = [0, 0]
-    for i in range(len(sudo_rows)) :
-        for j in range(len(sudo_columns)) :
-            for k in range(len(sudo_blocks)) :
-                local_possible = positionAllows(sudo_rows[i], sudo_columns[j], sudo_blocks[k])
-                if len(local_possible) < len(least_possible) :
-                    least_possible = local_possible
-                    position = [i, j]
-    new_version_rows[position[0]][position[1]] = least_possible[0]
+    # in case no new values were assigned:
+    # assign random value to position with least possible new inputs
+    if 0 == len(count_new_assignments) :
+        least_possible = positionAllows(sudo_rows[0], sudo_columns[0], sudo_blocks[0])
+        position = [0, 0]
+        for i in range(len(sudo_rows)) :
+            for j in range(len(sudo_columns)) :
+                for k in range(len(sudo_blocks)) :
+                    local_possible = positionAllows(sudo_rows[i], sudo_columns[j], sudo_blocks[k])
+                    if len(local_possible) < len(least_possible) :
+                        least_possible = local_possible
+                        position = [i, j]
+        new_version_rows[position[0]][position[1]] = least_possible[0]
 
 
 
