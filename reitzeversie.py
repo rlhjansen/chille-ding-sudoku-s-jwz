@@ -2,7 +2,6 @@ print("hello")
 
 # sudoku = [[0 for x in range(9)] for y in range(9)]
 sudo_rows = []
-
 with open('puzzle1.sudoku') as file:
     line = "_"
     while(line != ""):
@@ -13,6 +12,10 @@ with open('puzzle1.sudoku') as file:
                 row[i] = int(row[i][0])
             sudo_rows.append(row)
 file.close()
+
+
+
+
 
 sudo_columns = []
 for j in range(len(sudo_rows[0])):
@@ -36,6 +39,12 @@ def containsNoZero(List):
             if List[i][j] == 0:
                 pls = False
     return pls
+
+def solveSudoku(string):
+
+    while containsNoZero(RowList):
+        pass
+        RowList = newRowList
 
 
 
