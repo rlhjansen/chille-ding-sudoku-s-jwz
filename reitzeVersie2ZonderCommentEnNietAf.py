@@ -58,7 +58,7 @@ def openSudoku(string):
     file.close()
     return sudo_rows
 
-# comment moet nog
+# comment moet nog ..
 def positionAllows(row, column, block, added_list):
     allow_list = []
     for i in row:
