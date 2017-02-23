@@ -148,5 +148,6 @@ def solveSudoku(string):
         row_list = new_copy_row_list
     print(row_list)
 
+
 solveSudoku('puzzle1.sudoku')
 

@@ -3,6 +3,9 @@ make chille ding great again
 
 we got the best sudokus. they're great. it's true.
 
+BELANGRIJK lijst in lijst kan niet succ6 m8.
+
+
 nodig:
 def addToStatespaceList(een sudoku in de vorm rij van rijen, rij van StateSpaces):
    voegt de eerste input toe aan de tweede, maar op zo een manier dat op elk punt waar een 0 staat in de sudoku,
