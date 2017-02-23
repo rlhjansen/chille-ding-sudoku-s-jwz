@@ -42,6 +42,9 @@ def containsNoZero(List):
             current_number = List[i][j]
             if 0 == current_number:
                 pls = False
+                break
+    if not pls:
+        break
     return pls
 
 # This function opens the sudoku file and returns a list of rows
