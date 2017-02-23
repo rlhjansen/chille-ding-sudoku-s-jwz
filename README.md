@@ -24,14 +24,24 @@ def removeFirstOfOptionsFromStateSpace(een statespace, A):
 def checkStateSpaceValid(een StateSpace):
    return false als er een lijst is in de StateSpace die leeg is
           voorbeeld:
-          dit is de eerste rij van een statespace representatie van een oningevulde puzzle1.sudoku
-          [[7,9,[7,9,3,1,5,2,8][4,6],[7,9,3,1,6,4][2,5,8],[7,9,3,1,6][2,4,5,8],[7,9,3,1,6,5,8][2,4],
+          dit is de eerste rij van een statespace representatie van een oningevulde puzzle1.sudoku:
+          [7,9,[4,6],[2,5,8],[2,4,5,8],[2,4],3,[2,4,8], 1]
+          dit is de eerste rij van een statespace representatie van een ingevulde puzzle1.sudoku:
+          [9,7,6,8,5,4,3,2,1]
+          dit is de eerste rij van een statespace representatie (niet sudoku1) waarbij er een keuze gemaakt moest worden,
+          die uiteindelijk tot een tegenspraak heeft geleid:
+          [1,2,3,4,5,[],7,8,9]
+          return false in dit laatste geval
 
+def removeFromStateSpace(StateSpaceList, StateSpace):
+   Remove the Statespace from the list of StateSpaces
 
-
+def getCurrentStateSpace(StateSpaceList):
+    return the most up-to-date Statespace representation.
 
 
 defenitielijst van waardes/vormen die vaker terugkomen:
+
 A = een list met eerst de coördinaten x,y en daarna de lijst met mogelijkheden
    oftewel bijvoorbeeld [6,8,[1,2,3,6]] voor puzzle1.sudoku wanneer nog niets is ingevuld
 
