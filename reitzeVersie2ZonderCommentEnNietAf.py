@@ -58,7 +58,7 @@ def openSudoku(string):
     file.close()
     return sudo_rows
 
-
+# comment moet nog
 def positionAllows(row, column, block, added_list):
     allow_list = []
     for i in row:
@@ -89,6 +89,8 @@ def createColumnList(row_list):
         sudo_columns.append(column)
     return sudo_columns
 
+
+#this function takes as input either a block, column or row-list and returns a list with the possibilities for that list
 def changeToAllowSudoList(list):
     sudo_allows = []
     for j in range(len(list)):
