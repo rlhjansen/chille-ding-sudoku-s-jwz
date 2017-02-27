@@ -165,7 +165,7 @@ def replaceEasyZeros(stafe_spate):
     return stafe_spate
 
 
-# Add all possible states for the values of a zero.
+# Add all possible states for the values of a zero. Append those states into stafe_spate.
 def replaceHardZeros(stafe_spate):
     row_list = stafe_spate.pop()
     column_list = createColumnList(row_list)
@@ -182,10 +182,10 @@ def replaceHardZeros(stafe_spate):
     return stafe_spate
 
 
-#
+# Fill all EZ zero's, if not possible, guess a zero. Repeat untill no zero's are left.
 def solveSudoku():
     stafe_spate = []
-    row_list = openSudoku("puzzle5.sudoku")
+    row_list = openSudoku("puzzle6.sudoku")
     stafe_spate.append(row_list)
 
     while not containsNoZero(stafe_spate[-1]):
