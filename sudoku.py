@@ -136,9 +136,11 @@ def createColumnList(row_list):
     return sudo_columns
 
 
-# Find all easy zeros and replace them with valid values.
-def replaceEasyZeros(row_list, stafe_spate):
+# Find all easy zeros and replace them with valid values. Remove the current stafe_spate if invalid zero.
+def replaceEasyZeros(stafe_spate):
+    row_list = stafe_spate.pop()
     zero_replaced = True
+    invalid_zero = False
 
     while (not containsNoZero(row_list)) and zero_replaced == True:
         zero_replaced = False
@@ -154,25 +156,30 @@ def replaceEasyZeros(row_list, stafe_spate):
             if len(allow_zero) == 1:
                 row_list[coor_zero[0]][coor_zero[1]] = allow_zero[0]
                 zero_replaced = True
+                break
             elif len(allow_zero) == 0:
+                invalid_zero = True
+                break
 
-
-    return row_list
+    if invalid_zero == False:
+        stafe_spate.append(row_list)
+    return stafe_spate
 
 
 #
-def replaceHardZeros(row_list, stafe_spate):
-
+def replaceHardZeros(stafe_spate):
+    print("hihi")
 
 
 #
 def solveSudoku():
     stafe_spate = []
-    stafe_spate.append(openSudoku("puzzle3.sudoku"))
+    row_list = openSudoku("puzzle3.sudoku")
+    stafe_spate.append(row_list)
 
-    while not containsNoZero(stafe_spate[-1]):
+    while not containsNoZero(row_list):
         stafe_spate = replaceEasyZeros(stafe_spate)
-        stafe_spate = replaceHardZeros(stafe_spate)
+        # stafe_spate = replaceHardZeros(stafe_spate)
     for i in range(9):
         print(row_list[i])
 
