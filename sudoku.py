@@ -1,3 +1,5 @@
+import copy
+
 # an array containing the coordinate sets for different blocks
 # the first element for example contains the coordinate set for
 # a block of row 0 column 0,1,2 row 1 column 0,1,2 row 2 column 0,1,2
@@ -38,18 +40,15 @@ def containsNoZero(List):
 
 # Return the coordinates of the first zero after previous_zero.
 def findNextZero(row_list, previous_zero):
-    if previous_zero[1] == 8:
-        x = previous_zero[0] + 1
-        y = 0
-    else:
+    if previous_zero[1] != 8:
         x = previous_zero[0]
         y = previous_zero[1] + 1
 
-    for j in range(y, 9):
-        if row_list[x][j] == 0:
-            return [x, j]
+        for j in range(y, 9):
+            if row_list[x][j] == 0:
+                return [x, j]
 
-    for i in range(x + 1, 9):
+    for i in range(previous_zero[0] + 1, 9):
         for j in range(0, 9):
             if row_list[i][j] == 0:
                 return [i, j]
@@ -144,7 +143,7 @@ def replaceEasyZeros(stafe_spate):
 
     while (not containsNoZero(row_list)) and zero_replaced == True:
         zero_replaced = False
-        coor_zero = [0, 0]
+        coor_zero = [0, -1]
         column_list = createColumnList(row_list)
         block_list = createBlockList(row_list)
 
@@ -166,21 +165,35 @@ def replaceEasyZeros(stafe_spate):
     return stafe_spate
 
 
-#
+# Add all possible states for the values of a zero.
 def replaceHardZeros(stafe_spate):
-    print("hihi")
+    row_list = stafe_spate.pop()
+    column_list = createColumnList(row_list)
+    block_list = createBlockList(row_list)
+    coor_zero = findNextZero(row_list, [0, -1])
+    list_zero = coordinateToLists(coor_zero, row_list, column_list, block_list)
+    allow_zero = positionAllows(list_zero)
+
+    for i in allow_zero:
+        new_stafe_spate = copy.deepcopy(row_list)
+        new_stafe_spate[coor_zero[0]][coor_zero[1]] = i
+        stafe_spate.append(new_stafe_spate)
+
+    return stafe_spate
 
 
 #
 def solveSudoku():
     stafe_spate = []
-    row_list = openSudoku("puzzle3.sudoku")
+    row_list = openSudoku("puzzle5.sudoku")
     stafe_spate.append(row_list)
 
-    while not containsNoZero(row_list):
+    while not containsNoZero(stafe_spate[-1]):
         stafe_spate = replaceEasyZeros(stafe_spate)
-        # stafe_spate = replaceHardZeros(stafe_spate)
+        if not containsNoZero(stafe_spate[-1]):
+            stafe_spate = replaceHardZeros(stafe_spate)
+
     for i in range(9):
-        print(row_list[i])
+        print(stafe_spate[-1][i])
 
 solveSudoku()
