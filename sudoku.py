@@ -1,5 +1,3 @@
-print("hello")
-
 # an array containing the coordinate sets for different blocks
 # the first element for example contains the coordinate set for
 # a block of row 0 column 0,1,2 row 1 column 0,1,2 row 2 column 0,1,2
@@ -47,8 +45,12 @@ def findNextZero(row_list, previous_zero):
         x = previous_zero[0]
         y = previous_zero[1] + 1
 
-    for i in range(x, 9):
-        for j in range(y, 9):
+    for j in range(y, 9):
+        if row_list[x][j] == 0:
+            return [x, j]
+
+    for i in range(x + 1, 9):
+        for j in range(0, 9):
             if row_list[i][j] == 0:
                 return [i, j]
 
@@ -134,8 +136,8 @@ def createColumnList(row_list):
     return sudo_columns
 
 
-#
-def replaceEasyZeros(row_list):
+# Find all easy zeros and replace them with valid values.
+def replaceEasyZeros(row_list, stafe_spate):
     zero_replaced = True
 
     while (not containsNoZero(row_list)) and zero_replaced == True:
@@ -148,19 +150,30 @@ def replaceEasyZeros(row_list):
             coor_zero = findNextZero(row_list, coor_zero)
             list_zero = coordinateToLists(coor_zero, row_list, column_list, block_list)
             allow_zero = positionAllows(list_zero)
-            print(list_zero)
+
             if len(allow_zero) == 1:
                 row_list[coor_zero[0]][coor_zero[1]] = allow_zero[0]
                 zero_replaced = True
+            elif len(allow_zero) == 0:
+
 
     return row_list
 
 
 #
+def replaceHardZeros(row_list, stafe_spate):
+
+
+
+#
 def solveSudoku():
-    row_list = openSudoku("puzzle1.sudoku")
-    print(row_list)
-    row_list = replaceEasyZeros(row_list)
-    print(row_list)
+    stafe_spate = []
+    stafe_spate.append(openSudoku("puzzle3.sudoku"))
+
+    while not containsNoZero(stafe_spate[-1]):
+        stafe_spate = replaceEasyZeros(stafe_spate)
+        stafe_spate = replaceHardZeros(stafe_spate)
+    for i in range(9):
+        print(row_list[i])
 
 solveSudoku()
