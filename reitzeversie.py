@@ -82,7 +82,7 @@ def constructBlock(Coordinates):
 sudo_blocks = []
 for j in range(9):
     block_range = blockNumberRange[j]  # dictionary, blockrange format [[a,b,c][d,e,f]]
-    block = constructBlock(block_range)  #to make
+    block = constructBlock(block_range)
     sudo_blocks.append(block)
 
 

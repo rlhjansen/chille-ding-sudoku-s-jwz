@@ -115,7 +115,7 @@ def solveSudoku(string):
         new_copy_row_list = row_list
         for j in range(len(new_copy_row_list)):
             row = []
-            added_list = [] #to keep track of what is added to the current row
+            added_list = []  #to keep track of what is added to the current row
             for i in range(len(new_copy_row_list[0])):
                 if new_copy_row_list[j][i] != 0:
                     row.append(new_copy_row_list[j][i])
@@ -124,7 +124,8 @@ def solveSudoku(string):
                     for k in range(len(blockNumberRange)):
                         if (j in blockNumberRange[k][1]) & (i in blockNumberRange[k][0]):
                             f = k
-                    possibilities = positionAllows(row_allows[j], column_allows[i], block_allows[f],added_list)
+                    possibilities = positionAllows(row_allows[j], column_allows[i], block_allows[f], added_list)
+                    print(possibilities)
                     possibility_number = len(positionAllows(row_allows[j], column_allows[i], block_allows[f], added_list))
                     if (possibility_number < 2) & (possibility_number > 0):
                         row.append(possibilities[0])

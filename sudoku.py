@@ -15,18 +15,12 @@ blockNumberRange = [
     [[6, 7, 8], [6, 7, 8]]
 ]
 
-# goes through the entire list and returns anothr list that contains all numbers (1-9)not in the initial list.
-def changeToAllows(List):
-    complete = [1,2,3,4,5,6,7,8,9]
-    for i in range(len(List)):
-        if List[i] in complete:
-            complete.remove(List[i])
-    return complete
 
 # this function returns a single block by combining the coordinates
-# to construe a list that makes up a block
+# to construct a list that makes up a block
 def constructBlock(Coordinates, RowList):
     block = []
+
     for j in Coordinates[1]:
         for i in Coordinates[0]:
             block.append(RowList[j][i])
@@ -36,16 +30,43 @@ def constructBlock(Coordinates, RowList):
 # This function checks if the input list of lists contains no zeroes
 # if it doesn't contain any it returns true, otherwise false
 def containsNoZero(List):
-    pls = True
     for i in range(len(List)):
         for j in range(len(List[i])):
             current_number = List[i][j]
             if 0 == current_number:
-                pls = False
-                break
-    if not pls:
-        break
-    return pls
+                return False
+    return True
+
+
+# Return the coordinates of the first zero after previous_zero.
+def findNextZero(row_list, previous_zero):
+    if previous_zero[1] == 8:
+        x = previous_zero[0] + 1
+        y = 0
+    else:
+        x = previous_zero[0]
+        y = previous_zero[1] + 1
+
+    for i in range(x, 9):
+        for j in range(y, 9):
+            if row_list[i][j] == 0:
+                return [i, j]
+
+    return False
+
+
+# Returns a list with the row, column and block in which the input coordinates are in.
+def coordinateToLists(coordinates, row_list, column_list, block_list):
+    coor_list = []
+    coor_list.append(row_list[coordinates[0]])
+    coor_list.append(column_list[coordinates[1]])
+
+    for i in range(9):
+        if coordinates[0] in blockNumberRange[i][1] and coordinates[1] in blockNumberRange[i][0]:
+            coor_list.append(block_list[i])
+
+    return coor_list
+
 
 # This function opens the sudoku file and returns a list of rows
 def openSudoku(string):
@@ -62,20 +83,34 @@ def openSudoku(string):
     file.close()
     return sudo_rows
 
-# comment moet nog
-def positionAllows(row, column, block, added_list):
+
+# Return all numbers that are not present in the input list.
+def missingNumbers(list):
+    missing_list = []
+
+    for i in range(1,10):
+        if not i in list:
+            missing_list.append(i)
+
+    return missing_list
+
+
+# Return a list of allowed numbers that can be filled in the place of the zero.
+def positionAllows(coor_list):
     allow_list = []
-    for i in row:
-        if (i in column) & (i in block) & (not (i in added_list)):
+    row_missing = missingNumbers(coor_list[0])
+
+    for i in row_missing:
+        if (not i in coor_list[1]) & (not i in coor_list[2]):
             allow_list.append(i)
+
     return allow_list
 
 
-
-# These are functions to create the lists for blocks & coloumns from the list of rows.
-
+# Make a list of all blocks in the sudoku.
 def createBlockList(row_list):
     sudo_blocks = []
+
     for j in range(9):
         block_range = blockNumberRange[j]  # dictionary, blockrange format [[a,b,c][d,e,f]]
         block = constructBlock(block_range, row_list)  #to make
@@ -84,21 +119,48 @@ def createBlockList(row_list):
     return sudo_blocks
 
 
+# Make a list of all columns in the sudoku.
 def createColumnList(row_list):
     sudo_columns = []
+
     for j in range(len(row_list[0])):
         column = []
+
         for i in range(len(row_list)):
             column.append(row_list[i][j])
+
         sudo_columns.append(column)
+
     return sudo_columns
 
 
-#this function takes as input either a block, column or row-list and returns a list with the possibilities for that list
-def changeToAllowSudoList(list):
-    sudo_allows = []
-    for j in range(len(list)):
-        sudo_allows.append(changeToAllows(list[j]))
-    return sudo_allows
+#
+def replaceEasyZeros(row_list):
+    zero_replaced = True
+
+    while (not containsNoZero(row_list)) and zero_replaced == True:
+        zero_replaced = False
+        coor_zero = [0, 0]
+        column_list = createColumnList(row_list)
+        block_list = createBlockList(row_list)
+
+        while findNextZero(row_list, coor_zero) != False:
+            coor_zero = findNextZero(row_list, coor_zero)
+            list_zero = coordinateToLists(coor_zero, row_list, column_list, block_list)
+            allow_zero = positionAllows(list_zero)
+            print(list_zero)
+            if len(allow_zero) == 1:
+                row_list[coor_zero[0]][coor_zero[1]] = allow_zero[0]
+                zero_replaced = True
+
+    return row_list
 
 
+#
+def solveSudoku():
+    row_list = openSudoku("puzzle1.sudoku")
+    print(row_list)
+    row_list = replaceEasyZeros(row_list)
+    print(row_list)
+
+solveSudoku()
