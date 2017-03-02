@@ -184,16 +184,18 @@ def replaceHardZeros(stafe_spate):
 
 # Fill all EZ zero's, if not possible, guess a zero. Repeat untill no zero's are left.
 def solveSudoku():
-    stafe_spate = []
-    row_list = openSudoku("puzzle6.sudoku")
-    stafe_spate.append(row_list)
+    for i in range(1, 7):
+        stafe_spate = []
+        row_list = openSudoku("puzzle{}.sudoku".format(i))
+        stafe_spate.append(row_list)
 
-    while not containsNoZero(stafe_spate[-1]):
-        stafe_spate = replaceEasyZeros(stafe_spate)
-        if not containsNoZero(stafe_spate[-1]):
-            stafe_spate = replaceHardZeros(stafe_spate)
+        while not containsNoZero(stafe_spate[-1]):
+            stafe_spate = replaceEasyZeros(stafe_spate)
+            if not containsNoZero(stafe_spate[-1]):
+                stafe_spate = replaceHardZeros(stafe_spate)
 
-    for i in range(9):
-        print(stafe_spate[-1][i])
+        for i in range(9):
+            print(stafe_spate[-1][i])
+        print()
 
 solveSudoku()
