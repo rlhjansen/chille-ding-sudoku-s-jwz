@@ -1,3 +1,14 @@
+# Soduku.py
+# Reitze Jansen, Koen Schaper en Jochem Holscher
+# Course: Heuristieken, on the University of Amsterdam
+#
+# This program reads a sudoku and proceeds to solve it by searching for
+# zero's and look for all possible numbers that can be put on the place
+# of the zero. When multiple numbers can be assigned to a single zero,
+# the program makes a depth first search by keeping track of multiple
+# safe states in a stack. When no zero's are left, the program prints the
+# result.
+
 import copy
 
 # an array containing the coordinate sets for different blocks
