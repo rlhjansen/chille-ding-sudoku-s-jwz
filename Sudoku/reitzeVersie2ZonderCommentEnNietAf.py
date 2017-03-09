@@ -129,8 +129,8 @@ def solveSudoku(string):
                     possibility_number = len(positionAllows(row_allows[j], column_allows[i], block_allows[f], added_list))
                     if (possibility_number < 2) & (possibility_number > 0):
                         row.append(possibilities[0])
-                        print(possibilities)
                         count = 0
+                        print(possibilities)
                         added_list.append(possibilities[0])
                     else:
                         row.append(new_copy_row_list[j][i])
