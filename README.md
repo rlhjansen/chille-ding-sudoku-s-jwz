@@ -11,7 +11,7 @@ def addToStatespaceList(een sudoku in de vorm rij van rijen, rij van StateSpaces
    voegt de eerste input toe aan de tweede, maar op zo een manier dat op elk punt waar een 0 staat in de sudoku,
    er hierin een lijst staat met de mogelijkheden voor de situatie.
 
-
+    
 def getSafestOption(een StateSpace):
    return: A = een list met eerst de coördinaten x,y en daarna de lijst met mogelijkheden
    oftewel bijvoorbeeld [6,8,[1,2,3,6]] voor puzzle1.sudoku wanneer nog niets is ingevuld
