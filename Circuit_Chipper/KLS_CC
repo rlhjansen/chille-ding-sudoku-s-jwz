@@ -1,4 +1,5 @@
 def read_print(string):
+    grid = 0
     with open(string) as file:
         str = file.readline()
         gridsize = [int(s) for s in str.split() if s.isdigit()]
@@ -12,5 +13,5 @@ def read_print(string):
     file.close()
     return grid
 
-grid = read_print("print_1")
+grid = read_print("print_2")
 print(grid)
