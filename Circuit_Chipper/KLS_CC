@@ -1,22 +1,51 @@
-def read_print(string):
+# This program initialises the grid.
+
+
+# Read the grid from a file, then make a list of that size with 0's
+def make_base(string):
     grid = 0
+
     with open(string) as file:
-        str = file.readline()
-        gridsize = [int(s) for s in str.split() if s.isdigit()]
-        if(len(gridsize) == 3):
-            grid = [[[0 for _ in range(gridsize[0])] for _ in range(gridsize[1])] for _ in range(gridsize[2])]
+        line = file.readline()
+        grid_size = [int(s) for s in line.split() if s.isdigit()]
+
+        if len(grid_size) == 3:
+            grid = [[[0 for _ in range(grid_size[0])]
+                     for _ in range(grid_size[1])]
+                    for _ in range(grid_size[2])]
         else:
             print("Incorrect grid size")
-
-        # To do: init gates at coordinates
 
     file.close()
     return grid
 
-grid = read_print("print_2")
 
-for i in range (len(grid)):
-    gridlayer = grid[i]
-    for j in range (len(gridlayer)):
-        print(gridlayer[j])
-    print("\n")
+#
+def set_gates(string, grid):
+    with open(string) as file:
+        next(file)
+        line = file.readline()
+
+        while line:
+            line = line.replace("(", "").replace(")", "").replace(",", "")
+            gate = line.split(" ")
+            grid[0][int(gate[2])][int(gate[1])] = int(gate[0])
+
+            line = file.readline()
+
+    return grid
+
+
+# print the chip.
+def print_grid(grid):
+    for i in range(len(grid)):
+        grid_layer = grid[i]
+
+        for j in range(len(grid_layer)):
+            print(grid_layer[j])
+
+        print("\n")
+
+base = make_base("print_2")
+grid = set_gates("print_2", base)
+print_grid(grid)
