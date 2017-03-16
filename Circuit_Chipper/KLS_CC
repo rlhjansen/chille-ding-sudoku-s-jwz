@@ -1,7 +1,7 @@
 # This program initialises the grid.
 
 
-# Read the grid from a file, then make a list of that size with 0's
+# Read the grid from a file, then make a list of that size with 0's.
 def make_base(string):
     grid = 0
 
@@ -20,7 +20,7 @@ def make_base(string):
     return grid
 
 
-#
+# Read the coordinates of the gates from file, then put that gate in the grid.
 def set_gates(string, grid):
     with open(string) as file:
         next(file)
