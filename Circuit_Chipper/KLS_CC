@@ -10,7 +10,7 @@ def make_base(string):
         grid_size = [int(s) for s in line.split() if s.isdigit()]
 
         if len(grid_size) == 3:
-            grid = [[[0 for _ in range(grid_size[0])]
+            grid = [[["" for _ in range(grid_size[0])]
                      for _ in range(grid_size[1])]
                     for _ in range(grid_size[2])]
         else:
@@ -49,3 +49,18 @@ def print_grid(grid):
 base = make_base("print_2")
 grid = set_gates("print_2", base)
 print_grid(grid)
+
+# initialize connections
+def init_connections(file, netlist, grid):
+
+    with open(file) as file:
+        file.seek(netlist, 0)
+        line = file.readline()
+        connections = [int(s) for s in line.split() if s.isdigit()]
+    file.close()
+
+    for i in range(0, len(connections), 2):
+        gate_1 = connections[i]
+        gate_2 = connections[i+1]
+
+
