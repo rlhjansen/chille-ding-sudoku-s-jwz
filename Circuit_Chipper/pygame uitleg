@@ -1,0 +1,11 @@
+om met de graphics te kunnen werken gaan we pygame gebruiken
+wil je er chocola van kunnen maken dan is hier het tutorial waar ik mee werk:
+https://inventwithpython.com/makinggames.pdf
+
+daarnaast wil je natuurlijk ermee kunnen werken,
+
+ga daarvoor naar file --> settings --> Project: Solid python --> Project Interpreter
+klik hier op het plusje aan de rechterkant van het cherm.
+tik pygame in bij zoeken en klik op install Package.
+
+wees nu blij :)
