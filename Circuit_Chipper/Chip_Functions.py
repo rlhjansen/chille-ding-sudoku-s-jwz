@@ -7,7 +7,7 @@ length = 0
 def move_north(grid, position, wire):
     global length
     x = position[2]
-    y = position[1] + 1
+    y = position[1] - 1
     z = position[0]
 
     grid[z][y][x] = wire
@@ -31,7 +31,7 @@ def move_east(grid, position, wire):
 def move_south(grid, position, wire):
     global length
     x = position[2]
-    y = position[1] - 1
+    y = position[1] + 1
     z = position[0]
 
     grid[z][y][x] = wire

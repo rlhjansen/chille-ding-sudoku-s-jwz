@@ -1,5 +1,7 @@
 # This program initialises the grid.
 
+import Chip_Functions as fun
+
 
 # Read the grid from a file, then make a list of that size with 0's.
 def make_base(string):
