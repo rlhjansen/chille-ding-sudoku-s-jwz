@@ -8,4 +8,8 @@ ga daarvoor naar file --> settings --> Project: Solid python --> Project Interpr
 klik hier op het plusje aan de rechterkant van het cherm.
 tik pygame in bij zoeken en klik op install Package.
 
-wees nu blij :)
+ga nu naar Tools --> python console...
+tik hier in:
+import pygame
+
+als ie niets zegt, wees dan blij :)
