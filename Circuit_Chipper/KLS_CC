@@ -29,7 +29,7 @@ def set_gates(string, grid):
         while line:
             line = line.replace("(", "").replace(")", "").replace(",", "")
             gate = line.split(" ")
-            grid[0][int(gate[2])][int(gate[1])] = int(gate[0])
+            grid[0][int(gate[2])][int(gate[1])] = "G" + (gate[0])
 
             line = file.readline()
 
