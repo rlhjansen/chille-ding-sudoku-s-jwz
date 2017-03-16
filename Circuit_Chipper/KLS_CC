@@ -16,4 +16,7 @@ def read_print(string):
 grid = read_print("print_2")
 
 for i in range (len(grid)):
-    print(grid[i])
+    gridlayer = grid[i]
+    for j in range (len(gridlayer)):
+        print(gridlayer[j])
+    print("\n")
