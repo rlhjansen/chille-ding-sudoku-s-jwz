@@ -10,7 +10,7 @@ def move_north(grid, position, wire):
     y = position[1] - 1
     z = position[0]
 
-    grid[z][y][x] = wire
+    grid[z][y][x].append(wire)
     length += 1
     return [z, y, x]
 
@@ -22,7 +22,7 @@ def move_east(grid, position, wire):
     y = position[1]
     z = position[0]
 
-    grid[z][y][x] = wire
+    grid[z][y][x].append(wire)
     length += 1
     return [z, y, x]
 
@@ -34,7 +34,7 @@ def move_south(grid, position, wire):
     y = position[1] + 1
     z = position[0]
 
-    grid[z][y][x] = wire
+    grid[z][y][x].append(wire)
     length += 1
     return [z, y, x]
 
@@ -46,7 +46,7 @@ def move_west(grid, position, wire):
     y = position[1]
     z = position[0]
 
-    grid[z][y][x] = wire
+    grid[z][y][x].append(wire)
     length += 1
     return [z, y, x]
 
@@ -58,7 +58,7 @@ def move_up(grid, position, wire):
     y = position[1]
     z = position[0] + 1
 
-    grid[z][y][x] = wire
+    grid[z][y][x].append(wire)
     length += 1
     return [z, y, x]
 
@@ -70,7 +70,7 @@ def move_down(grid, position, wire):
     y = position[1]
     z = position[0] - 1
 
-    grid[z][y][x] = wire
+    grid[z][y][x].append(wire)
     length += 1
     return [z, y, x]
 
