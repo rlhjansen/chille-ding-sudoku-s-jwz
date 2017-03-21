@@ -3,7 +3,7 @@
 length = 0
 
 
-#
+# Move one north, then append the name of the wire to that place in the grid.
 def move_north(grid, position, wire):
     global length
     x = position[2]
@@ -15,7 +15,7 @@ def move_north(grid, position, wire):
     return [z, y, x]
 
 
-#
+# Move one east, then append the name of the wire to that place.
 def move_east(grid, position, wire):
     global length
     x = position[2] + 1
@@ -27,7 +27,7 @@ def move_east(grid, position, wire):
     return [z, y, x]
 
 
-#
+# Move one south, then append the name of the wire.
 def move_south(grid, position, wire):
     global length
     x = position[2]
@@ -39,7 +39,7 @@ def move_south(grid, position, wire):
     return [z, y, x]
 
 
-#
+# Move west, then append the name of the wire.
 def move_west(grid, position, wire):
     global length
     x = position[2] - 1
@@ -51,7 +51,7 @@ def move_west(grid, position, wire):
     return [z, y, x]
 
 
-#
+# Move up, append the name of the wire.
 def move_up(grid, position, wire):
     global length
     x = position[2]
@@ -63,7 +63,7 @@ def move_up(grid, position, wire):
     return [z, y, x]
 
 
-#
+# Move down, append the wire.
 def move_down(grid, position, wire):
     global length
     x = position[2]
@@ -75,7 +75,7 @@ def move_down(grid, position, wire):
     return [z, y, x]
 
 
-#
+# Determine which direction you need to move.
 def move(grid, direction, position, wire):
     if direction == 'north':
         return move_north(grid, position, wire)
