@@ -10,7 +10,7 @@ def move_north(grid, position, wire):
     y = position[1] - 1
     z = position[0]
 
-    grid[z][y][x].append(wire)
+    grid[z][y][x] = grid[z][y][x] + wire
     length += 1
     return [z, y, x]
 
@@ -22,7 +22,7 @@ def move_east(grid, position, wire):
     y = position[1]
     z = position[0]
 
-    grid[z][y][x].append(wire)
+    grid[z][y][x] = grid[z][y][x] + wire
     length += 1
     return [z, y, x]
 
@@ -34,7 +34,7 @@ def move_south(grid, position, wire):
     y = position[1] + 1
     z = position[0]
 
-    grid[z][y][x].append(wire)
+    grid[z][y][x] = grid[z][y][x] + wire
     length += 1
     return [z, y, x]
 
@@ -46,7 +46,7 @@ def move_west(grid, position, wire):
     y = position[1]
     z = position[0]
 
-    grid[z][y][x].append(wire)
+    grid[z][y][x] = grid[z][y][x] + wire
     length += 1
     return [z, y, x]
 
@@ -58,7 +58,7 @@ def move_up(grid, position, wire):
     y = position[1]
     z = position[0] + 1
 
-    grid[z][y][x].append(wire)
+    grid[z][y][x] = grid[z][y][x] + wire
     length += 1
     return [z, y, x]
 
@@ -70,7 +70,7 @@ def move_down(grid, position, wire):
     y = position[1]
     z = position[0] - 1
 
-    grid[z][y][x].append(wire)
+    grid[z][y][x] = grid[z][y][x] + wire
     length += 1
     return [z, y, x]
 
@@ -89,3 +89,18 @@ def move(grid, direction, position, wire):
         return move_up(grid, position, wire)
     elif direction == 'down':
         return move_down(grid, position, wire)
+
+
+# Scan through the grid and return the coordinates of all existing conflicts.
+def find_conflicts(grid):
+    conflicts = []
+
+    for z in range(len(grid)):
+        for y in range(len(grid[z])):
+            for x in range(len(grid[z][y])):
+                point = grid[z][y][x]
+
+                if point != '' and not point[1:].isdecimal():
+                    conflicts.append([z, y, x])
+
+    return conflicts

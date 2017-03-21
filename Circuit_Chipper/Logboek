@@ -11,3 +11,10 @@ Aanbevolen formaat:
     ...
 -------------------------------------------
 
+Jochem, 21/03
+Ik ga wat functies schrijven die nodig zijn voor de rest van ons programma in
+chip_functions.py. Als ik dan nog tijd over heb ga ik algoritmes uitschrijven
+in Search_Algortihms.py
+Uiteindelijk heb ik slecht alleen maar de move functies aangepast en een
+find_conflicts geschreven. Ik liep namelijk tegen een probleem aan bij het
+het oplossen van conflicts.
