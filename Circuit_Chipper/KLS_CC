@@ -1,7 +1,7 @@
+import netlists
+import Chip_Functions
+
 # This program initialises the grid.
-
-import Chip_Functions as fun
-
 
 # Read the grid from a file, then make a list of that size with 0's.
 def make_base(string):
@@ -48,21 +48,20 @@ def print_grid(grid):
 
         print("\n")
 
+# initialize connections
+def init_connections(netlist, grid):
+    for i in range(len(netlist)):
+        gate_1 = "G" + str(netlist[i][0])
+        gate_2 = "G" + str(netlist[i][1])
+
+
+
+
+
+
+
 base = make_base("print_2")
 grid = set_gates("print_2", base)
 print_grid(grid)
-
-# initialize connections
-def init_connections(file, netlist, grid):
-
-    with open(file) as file:
-        file.seek(netlist, 0)
-        line = file.readline()
-        connections = [int(s) for s in line.split() if s.isdigit()]
-    file.close()
-
-    for i in range(0, len(connections), 2):
-        gate_1 = connections[i]
-        gate_2 = connections[i+1]
-
-
+netlist = netlists.netlist_4
+init_connections(netlist, grid)
