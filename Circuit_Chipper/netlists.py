@@ -1,21 +1,23 @@
-#    print("netlist_X = [", end="")
-#    k = 0
-#    for j in netlist_6:
-#        if k == 1.0:
-#            print("\t")
-#            k = 0.0
-#        currentTup = j
-#        print("(", end="")
-#        for i in currentTup:
-#            i += 1
-#            if i == currentTup[-1] +1:
-#                print(i, end="")
-#            else:
-#                print(i, end="")
-#                print(", ",end="")
-#        print("), ", end="")
-#        k += 0.2
-#    print("]",end="")
+'''
+print("netlist_X = [", end="")
+k = 0
+for j in netlist_6:
+    if k == 1.0:
+        print("\t")
+        k = 0.0
+    currentTup = j
+    print("(", end="")
+    for i in currentTup:
+        i += 1
+        if i == currentTup[-1] +1:
+            print(i, end="")
+        else:
+            print(i, end="")
+            print(", ",end="")
+    print("), ", end="")
+    k += 0.2
+print("]",end="")
+'''
 
 
 netlist_1 = [(24, 5), (6, 8), (2, 1), (16, 22), (4, 6),
