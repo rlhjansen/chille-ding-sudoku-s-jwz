@@ -18,3 +18,7 @@ in Search_Algortihms.py
 Uiteindelijk heb ik slecht alleen maar de move functies aangepast en een
 find_conflicts geschreven. Ik liep namelijk tegen een probleem aan bij het
 het oplossen van conflicts.
+
+Jochem, 23/03
+Ik ga een functie schrijven die een wire gaat leggen van een gate naar een
+andere gate.

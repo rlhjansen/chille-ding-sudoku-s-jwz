@@ -1,10 +1,5 @@
-initialiseren:
-    1. grid maken
-    2. gates in plaatsen - Koen
-    3. kortste routes maken:
-
-Conflicten fixen
-
-Route optimaliseren
-
-Resultaat representeren - Reitze
+1. Lees netlist in
+2. Leg wires op volgorde
+3. Als kortste totaal, sla oplossing op
+4. Swap volgorde netlist
+5. Terug naar 2
