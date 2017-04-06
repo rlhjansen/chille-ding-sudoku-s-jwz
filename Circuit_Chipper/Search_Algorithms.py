@@ -61,9 +61,9 @@ def distance_heuristik(start, end):
 def legal_position(position, grid, end):
     if position[0] > 7 or position[0] < 0:
         return False
-    elif position[1] > len(grid[0]) or position[1] < 0:
+    elif position[1] >= len(grid[0]) or position[1] < 0:
         return False
-    elif position[2] > len(grid[0][0]) or position[2] < 0:
+    elif position[2] >= len(grid[0][0]) or position[2] < 0:
         return False
     elif grid[position[0]][position[1]][position[2]] == '':
         return True
@@ -82,16 +82,16 @@ def connect_wire(start, end, grid):
         path = paths.pop()
 
         for direction in directions:
-            pointer = path[-1]
+            pointer = list(path[-1])
 
-            for i in pointer:
+            for i in range(len(pointer)):
                 pointer[i] += direction[i]
 
             if not legal_position(pointer, grid, end):
                 continue
 
             heuristik = len(path) - 1 + distance_heuristik(pointer, end)
-            new_path = [heuristik] + path + [pointer]
+            new_path = [heuristik] + path + [tuple(pointer)]
 
             index = 0
             while index < len(paths) and paths[index][0] > heuristik:

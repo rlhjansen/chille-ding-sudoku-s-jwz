@@ -1,5 +1,6 @@
 import netlists
 from random import randint
+import Search_Algorithms
 
 # This program initialises the grid.
 
@@ -32,7 +33,7 @@ def set_gates(string, grid):
             line = line.replace("(", "").replace(")", "").replace(",", "")
             gate = line.split(" ")
             grid[0][int(gate[2])][int(gate[1])] = "G" + (gate[0])
-            gate_coords["G" + (gate[0])] = (int(gate[1]), int(gate[2]))
+            gate_coords["G" + (gate[0])] = (0, int(gate[1]), int(gate[2]))
 
             line = file.readline()
 
@@ -48,41 +49,40 @@ def get_coords(gate, grid):
             else:
                 return 0
 
-# move in the x direction
-def move_x(location, x_moves, n, grid):
-    if x_moves > 0:
-        location = (location[0] - 1, location[1])
-    else:
-        location = (location[0] + 1, location[1])
-    string = grid[0][location[1]][location[0]] + 'W' + str(n)
-    grid[0][location[1]][location[0]] = string
-
-# move in the y direction
-def move_y(location, y_moves, n, grid):
-    if y_moves > 0:
-        location = (location[0], location[1] - 1)
-    else:
-        location = (location[0], location[1] + 1)
-    string = grid[0][location[1]][location[0]] + 'W' + str(n)
-    grid[0][location[1]][location[0]] = string
 
 # lay a connection between two gates
 def make_connection(c1, c2, n, grid):
-    location = c1
-    x_moves = c1[0] - c2[0]
-    y_moves = c1[1] - c2[1]
+    location = (c1[1], c1[2])
+    x_moves = c1[1] - c2[1]
+    y_moves = c1[2] - c2[2]
     while x_moves != 0 or y_moves != 0:
         if randint(0, 1) == 0 and x_moves != 0:
-            move_x(location, x_moves, n, grid)
-            x_moves = x_moves - 1
+            if x_moves > 0:
+                location = (location[0] - 1, location[1])
+                x_moves = x_moves - 1
+            else:
+                location = (location[0] + 1, location[1])
+                x_moves = x_moves + 1
+            string = grid[0][location[1]][location[0]] + 'W' + str(n)
+            grid[0][location[1]][location[0]] = string
         elif y_moves != 0:
-            move_y(location, y_moves, n, grid)
-            y_moves = y_moves + 1
+            if y_moves > 0:
+                location = (location[0], location[1] - 1)
+                y_moves = y_moves - 1
+            else:
+                location = (location[0], location[1] + 1)
+                y_moves = y_moves + 1
+            string = grid[0][location[1]][location[0]] + 'W' + str(n)
+            grid[0][location[1]][location[0]] = string
         else:
-            move_x(location, x_moves, n, grid)
-            x_moves = x_moves - 1
-
-
+            if x_moves > 0:
+                location = (location[0] - 1, location[1])
+                x_moves = x_moves - 1
+            else:
+                location = (location[0] + 1, location[1])
+                x_moves = x_moves + 1
+            string = grid[0][location[1]][location[0]] + 'W' + str(n)
+            grid[0][location[1]][location[0]] = string
 
 
 # initialize connections
@@ -93,7 +93,9 @@ def init_connections(netlist, grid):
         gate_2 = "G" + str(netlist[i][1])
         c1 = gate_coords[gate_1]
         c2 = gate_coords[gate_2]
-        make_connection(c1, c2, counter, grid)
+        #make_connection(c1, c2, counter, grid)
+        if Search_Algorithms.connect_wire(c1, c2, grid):
+            break
         counter = counter + 1
 
 
