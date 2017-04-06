@@ -1,5 +1,5 @@
 import netlists
-import Chip_Functions
+from random import randint
 
 # This program initialises the grid.
 
@@ -32,10 +32,70 @@ def set_gates(string, grid):
             line = line.replace("(", "").replace(")", "").replace(",", "")
             gate = line.split(" ")
             grid[0][int(gate[2])][int(gate[1])] = "G" + (gate[0])
+            gate_coords["G" + (gate[0])] = (int(gate[1]), int(gate[2]))
 
             line = file.readline()
 
     return grid
+
+
+# get coordinates of a gate
+def get_coords(gate, grid):
+    for y in range(len(grid[0])):
+        for x in range(len(grid[0][y])):
+            if grid[0][y][x] == gate:
+                return (x, y)
+            else:
+                return 0
+
+# move in the x direction
+def move_x(location, x_moves, n, grid):
+    if x_moves > 0:
+        location = (location[0] - 1, location[1])
+    else:
+        location = (location[0] + 1, location[1])
+    string = grid[0][location[1]][location[0]] + 'W' + str(n)
+    grid[0][location[1]][location[0]] = string
+
+# move in the y direction
+def move_y(location, y_moves, n, grid):
+    if y_moves > 0:
+        location = (location[0], location[1] - 1)
+    else:
+        location = (location[0], location[1] + 1)
+    string = grid[0][location[1]][location[0]] + 'W' + str(n)
+    grid[0][location[1]][location[0]] = string
+
+# lay a connection between two gates
+def make_connection(c1, c2, n, grid):
+    location = c1
+    x_moves = c1[0] - c2[0]
+    y_moves = c1[1] - c2[1]
+    while x_moves != 0 or y_moves != 0:
+        if randint(0, 1) == 0 and x_moves != 0:
+            move_x(location, x_moves, n, grid)
+            x_moves = x_moves - 1
+        elif y_moves != 0:
+            move_y(location, y_moves, n, grid)
+            y_moves = y_moves + 1
+        else:
+            move_x(location, x_moves, n, grid)
+            x_moves = x_moves - 1
+
+
+
+
+# initialize connections
+def init_connections(netlist, grid):
+    counter = 0
+    for i in range(len(netlist)):
+        gate_1 = "G" + str(netlist[i][0])
+        gate_2 = "G" + str(netlist[i][1])
+        c1 = gate_coords[gate_1]
+        c2 = gate_coords[gate_2]
+        make_connection(c1, c2, counter, grid)
+        counter = counter + 1
+
 
 
 # print the chip.
@@ -48,20 +108,12 @@ def print_grid(grid):
 
         print("\n")
 
-# initialize connections
-def init_connections(netlist, grid):
-    for i in range(len(netlist)):
-        gate_1 = "G" + str(netlist[i][0])
-        gate_2 = "G" + str(netlist[i][1])
 
 
 
-
-
-
-
+gate_coords = {}
 base = make_base("print_2")
 grid = set_gates("print_2", base)
-print_grid(grid)
 netlist = netlists.netlist_4
 init_connections(netlist, grid)
+print_grid(grid)
