@@ -4,6 +4,7 @@ import Search_Algorithms
 
 # This program initialises the grid.
 
+
 # Read the grid from a file, then make a list of that size with 0's.
 def make_base(string):
     grid = 0
@@ -85,21 +86,6 @@ def make_connection(c1, c2, n, grid):
             grid[0][location[1]][location[0]] = string
 
 
-# initialize connections
-def init_connections(netlist, grid):
-    counter = 0
-    for i in range(len(netlist)):
-        gate_1 = "G" + str(netlist[i][0])
-        gate_2 = "G" + str(netlist[i][1])
-        c1 = gate_coords[gate_1]
-        c2 = gate_coords[gate_2]
-        #make_connection(c1, c2, counter, grid)
-        if Search_Algorithms.connect_wire(c1, c2, grid):
-            break
-        counter = counter + 1
-
-
-
 # print the chip.
 def print_grid(grid):
     for i in range(len(grid)):
@@ -111,11 +97,39 @@ def print_grid(grid):
         print("\n")
 
 
+# Show the most important statistics about the program
+def print_stats():
+    print("We were able to draw {} wires."
+          .format(Search_Algorithms.Wire.num_wires))
+    print("There were {} iterations."
+          .format(Search_Algorithms.Wire.wires_layed))
+    print("The total length of the wires is {}."
+          .format(Search_Algorithms.Wire.wire_length))
+
+
+# initialize connections
+def init_connections(netlist, grid):
+    counter = 0
+    wires = []
+    for i in range(len(netlist)):
+        gate_1 = "G" + str(netlist[i][0])
+        gate_2 = "G" + str(netlist[i][1])
+        c1 = gate_coords[gate_1]
+        c2 = gate_coords[gate_2]
+        #make_connection(c1, c2, counter, grid)
+        coordinates = Search_Algorithms.connect_wire(c1, c2, grid)
+        if not coordinates:
+            print("buggers")
+            break
+        wires.append(Search_Algorithms.Wire(grid, coordinates))
+        counter = counter + 1
 
 
 gate_coords = {}
-base = make_base("print_2")
-grid = set_gates("print_2", base)
-netlist = netlists.netlist_4
+base = make_base("print_1")
+grid = set_gates("print_1", base)
+netlist = netlists.netlist_1
 init_connections(netlist, grid)
 print_grid(grid)
+print_stats()
+

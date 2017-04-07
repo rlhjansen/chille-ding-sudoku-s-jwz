@@ -3,49 +3,51 @@
 # to all these algorithms.
 
 
-#
+# Stores the wire route, name, length and some helpful functions.
 class Wire:
     'class for all wires'
     wire_length = 0
     num_wires = 0
+    wires_layed = 0
 
-    def __init__(self, gate):
-        self.pointer = gate
+    def __init__(self, grid, coordinates):
         Wire.num_wires += 1
+        Wire.wires_layed += 1
         self.name = 'W' + str(Wire.num_wires)
+        self.coordinates = coordinates
 
-    def move_pointer(self, direction):
-        distance = 0
-        for i in direction:
-            if i != 0 or abs(i) != 1:
-                return False
-            distance += 1
-        if distance != 1:
-            return False
+        for coordinate in self.coordinates:
+            x = coordinate[2]
+            y = coordinate[1]
+            z = coordinate[0]
 
-        for j in range(self.pointer):
-            self.pointer[j] += direction[j]
+            Wire.wire_length += 1
+            grid[z][y][x] += self.name
 
-        return self.pointer
+    def remove(self, grid):
+        Wire.num_wires -= 1
 
-    def lay_wire(self, grid, coordinate):
-        x = coordinate[2]
-        y = coordinate[1]
-        z = coordinate[0]
+        for coordinate in self.coordinates:
+            x = coordinate[2]
+            y = coordinate[1]
+            z = coordinate[0]
 
-        Wire.wire_length -= 1
-        grid[z][y][x].append(self.name)
-
-    def remove_wire(self, grid, coordinate):
-        x = coordinate[2]
-        y = coordinate[1]
-        z = coordinate[0]
-
-        if self.name in grid[z][y][x]:
             grid[z][y][x].replace(self.name, '')
             Wire.wire_length -= 1
-            return True
-        return False
+            self.coordinates = []
+
+    def lay(self, grid, coordinate):
+        self.coordinates = coordinate
+        Wire.num_wires += 1
+        Wire.wires_layed += 1
+
+        for coordinate in self.coordinates:
+            x = coordinate[2]
+            y = coordinate[1]
+            z = coordinate[0]
+
+            Wire.wire_length += 1
+            grid[z][y][x] += self.name
 
 
 # Calculate manhattan distance between two points
@@ -57,7 +59,7 @@ def distance_heuristik(start, end):
     return x + y + z
 
 
-#
+# Check if a wire can be placed on the coordinates
 def legal_position(position, grid, end):
     if position[0] > 7 or position[0] < 0:
         return False
@@ -67,16 +69,18 @@ def legal_position(position, grid, end):
         return False
     elif grid[position[0]][position[1]][position[2]] == '':
         return True
-    elif grid[position[0]][position[1]][position[2]] == end:
+    elif (position[0], position[1], position[2]) == end:
         return True
     return False
 
 
-#
+# Draw a wire from start to end with the A-star method.
 def connect_wire(start, end, grid):
+
     paths = [[distance_heuristik(start, end), start]]
-    directions = ((1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1),
-                  (0, 0, -1))
+    directions = ((0, 0, 1), (0, 0, -1), (0, 1, 0), (0, -1, 0), (1, 0, 0),
+                  (-1, 0, 0))
+    check = 0 # This is when A-star takes too long about 1 line
 
     while paths[-1][-1] != end:
         path = paths.pop()
@@ -87,14 +91,18 @@ def connect_wire(start, end, grid):
             for i in range(len(pointer)):
                 pointer[i] += direction[i]
 
-            if not legal_position(pointer, grid, end):
+            if not(legal_position(pointer, grid, end)) or tuple(pointer) in path:
                 continue
+            check += 1
+            if check % 1000 == 0:
+                print("takes too long")
+                return False
 
             heuristik = len(path) - 1 + distance_heuristik(pointer, end)
-            new_path = [heuristik] + path + [tuple(pointer)]
+            new_path = [heuristik] + path[1:] + [tuple(pointer)]
 
             index = 0
-            while index < len(paths) and paths[index][0] > heuristik:
+            while index < len(paths) and paths[index][0] >= heuristik:
                 index += 1
 
             if index == len(paths):
@@ -105,7 +113,8 @@ def connect_wire(start, end, grid):
         if len(paths) == 0:
             return False
 
-    return paths[-1][2:-2]
+    print("Found path:", paths[-1][2:-1])
+    return paths[-1][2:-1]
 
 
 
