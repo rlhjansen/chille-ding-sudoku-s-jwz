@@ -3,6 +3,17 @@
 # to all these algorithms.
 
 
+# print the chip.
+def print_grid(grid):
+    for i in range(len(grid)):
+        grid_layer = grid[i]
+
+        for j in range(len(grid_layer)):
+            print(grid_layer[j])
+
+        print("\n")
+
+
 # Stores the wire route, name, length and some helpful functions.
 class Wire:
     'class for all wires'
@@ -11,18 +22,10 @@ class Wire:
     wires_layed = 0
 
     def __init__(self, grid, coordinates):
-        Wire.num_wires += 1
-        Wire.wires_layed += 1
         self.name = 'W' + str(Wire.num_wires)
         self.coordinates = coordinates
-
-        for coordinate in self.coordinates:
-            x = coordinate[2]
-            y = coordinate[1]
-            z = coordinate[0]
-
-            Wire.wire_length += 1
-            grid[z][y][x] += self.name
+        Wire.lay(self, grid, coordinates)
+        self.conflicts = Wire.num_conflicts(self, grid)
 
     def remove(self, grid):
         Wire.num_wires -= 1
@@ -48,6 +51,17 @@ class Wire:
 
             Wire.wire_length += 1
             grid[z][y][x] += self.name
+
+    def num_conflicts(self, grid):
+        num_conflicts = 0
+
+        for coordinate in self.coordinates:
+            node = grid[coordinate[0]][coordinate[1]][coordinate[2]]
+
+            if node != self.name:
+                num_conflicts += 1
+
+        return num_conflicts
 
 
 # Calculate manhattan distance between two points
@@ -93,13 +107,17 @@ def connect_wire(start, end, grid):
 
             if not(legal_position(pointer, grid, end)) or tuple(pointer) in path:
                 continue
-            check += 1
-            if check % 1000 == 0:
-                print("takes too long")
-                return False
 
             heuristik = len(path) - 1 + distance_heuristik(pointer, end)
             new_path = [heuristik] + path[1:] + [tuple(pointer)]
+
+            if False == True:
+                check += 1
+                if check % 100 == 0:
+                    print("check")
+                    new_wire = Wire(grid, new_path[2:-1])
+                    print_grid(grid)
+                    Wire.remove(new_wire, grid)
 
             index = 0
             while index < len(paths) and paths[index][0] >= heuristik:

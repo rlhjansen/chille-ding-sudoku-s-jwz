@@ -34,7 +34,7 @@ def set_gates(string, grid):
             line = line.replace("(", "").replace(")", "").replace(",", "")
             gate = line.split(" ")
             grid[0][int(gate[2])][int(gate[1])] = "G" + (gate[0])
-            gate_coords["G" + (gate[0])] = (0, int(gate[1]), int(gate[2]))
+            gate_coords["G" + (gate[0])] = (0, int(gate[2]), int(gate[1]))
 
             line = file.readline()
 
@@ -49,6 +49,56 @@ def get_coords(gate, grid):
                 return (x, y)
             else:
                 return 0
+
+
+# Return the path of a wire that goes manhattan distance with conflicts.
+def connect_conflicting_wire(start, end):
+    pointer = start
+    path = []
+
+    x_moves = start[2] - end[2]
+    if x_moves < 0:
+        x_direction = - 1
+        x_moves = - x_moves
+    else:
+        x_direction = 1
+
+    y_moves = start[1] - end[1]
+    if y_moves < 0:
+        y_direction = - 1
+        y_moves = - y_moves
+    else:
+        y_direction = 1
+
+    while x_moves != 0 or y_moves != 0:
+        if y_moves == 0 or (x_moves != 0 and randint(0, 1) == 0):
+            pointer = (0, pointer[1], pointer[2] - x_direction)
+            x_moves -= 1
+        else:
+            pointer = (0, pointer[1] - y_direction, pointer[2])
+            y_moves -= 1
+
+        path.append(pointer)
+
+    return path[:-1]
+
+
+# Returns the amount of overlapping wires/gates in the grid.
+def num_conflicts(grid):
+    conflicts = 0
+    for layer in grid:
+        for row in layer:
+            for node in row:
+                num_wires = 0
+
+                for character in node:
+                    if character.isalpha():
+                        num_wires += 1
+
+                if num_wires > 1:
+                    conflicts += num_wires -2
+
+    return conflicts
 
 
 # lay a connection between two gates
@@ -117,19 +167,25 @@ def init_connections(netlist, grid):
         c1 = gate_coords[gate_1]
         c2 = gate_coords[gate_2]
         #make_connection(c1, c2, counter, grid)
-        coordinates = Search_Algorithms.connect_wire(c1, c2, grid)
-        if not coordinates:
-            print("buggers")
-            break
+        #coordinates = Search_Algorithms.connect_wire(c1, c2, grid)
+        #if coordinates == False:
+        #    print("buggers")
+        #    break
+        coordinates = connect_conflicting_wire(c1, c2)
         wires.append(Search_Algorithms.Wire(grid, coordinates))
-        counter = counter + 1
+
+    return sorted(wires, key=lambda wire: wire.conflicts, reverse= True)
 
 
 gate_coords = {}
 base = make_base("print_1")
 grid = set_gates("print_1", base)
 netlist = netlists.netlist_1
-init_connections(netlist, grid)
+wires = init_connections(netlist, grid)
 print_grid(grid)
 print_stats()
+print("The wires, form most conflicted to least conflicted are:", end= ' ')
+for wire in wires:
+    print(wire.name, end=' ')
+print()
 
