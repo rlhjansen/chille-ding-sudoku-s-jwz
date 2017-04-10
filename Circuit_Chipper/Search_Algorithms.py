@@ -105,7 +105,7 @@ def num_conflicts(grid):
                         num_wires += 1
 
                 if num_wires > 1:
-                    conflicts += num_wires -2
+                    conflicts += num_wires -1
 
     return conflicts
 
