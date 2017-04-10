@@ -19,11 +19,10 @@ def print_grid(grid):
 class Wire:
     'class for all wires'
     wire_length = 0
-    num_wires = 0
     wires_layed = 0
 
     def __init__(self, grid, coordinates, start, end):
-        self.name = 'W' + str(Wire.num_wires)
+        self.name = 'W' + str(1 + Wire.wires_layed) + '.'
         self.coordinates = coordinates
         Wire.lay(self, grid, coordinates)
         self.conflicts = Wire.num_conflicts(self, grid)
@@ -31,8 +30,6 @@ class Wire:
         self.end = end
 
     def remove(self, grid):
-        Wire.num_wires -= 1
-
         for coordinate in self.coordinates:
             x = coordinate[2]
             y = coordinate[1]
@@ -45,7 +42,6 @@ class Wire:
 
     def lay(self, grid, coordinate):
         self.coordinates = coordinate
-        Wire.num_wires += 1
         Wire.wires_layed += 1
 
         for coordinate in self.coordinates:

@@ -149,8 +149,6 @@ def print_grid(grid):
 
 # Show the most important statistics about the program
 def print_stats():
-    print("We were able to draw {} wires."
-          .format(Search_Algorithms.Wire.num_wires))
     print("There were {} iterations."
           .format(Search_Algorithms.Wire.wires_layed))
     print("The total length of the wires is {}."
@@ -159,29 +157,25 @@ def print_stats():
 
 # initialize connections
 def init_connections(netlist, grid):
-    counter = 0
     wires = []
-    for i in range(len(netlist)):
-        gate_1 = "G" + str(netlist[i][0])
-        gate_2 = "G" + str(netlist[i][1])
+
+    for connection in netlist:
+        gate_1 = "G" + str(connection[0])
+        gate_2 = "G" + str(connection[1])
         start = gate_coords[gate_1]
         end = gate_coords[gate_2]
         coordinates = connect_conflicting_wire(start, end)
         wires.append(Search_Algorithms.Wire(grid, coordinates, start, end))
 
-    return sorted(wires, key=lambda wire: wire.conflicts, reverse= True)
+    return wires
 
 
 gate_coords = {}
-base = make_base("print_1")
-grid = set_gates("print_1", base)
-netlist = netlists.netlist_1
+base = make_base("print_2")
+grid = set_gates("print_2", base)
+netlist = netlists.netlist_6
 wires = init_connections(netlist, grid)
 Search_Algorithms.hillclimber(grid, wires)
 print_grid(grid)
 print_stats()
-print("The wires, form most conflicted to least conflicted are:", end= ' ')
-for wire in wires:
-    print(wire.name, end=' ')
-print()
 
