@@ -63,6 +63,13 @@ class Wire:
 
         return num_conflicts
 
+    def __del__(self):
+        Wire.wire_length = 0
+        Wire.wires_layed = 0
+
+    def length(self):
+        return len(self.coordinates)
+
 
 # Calculate manhattan distance between two points
 def distance_heuristik(start, end):
@@ -133,7 +140,6 @@ def connect_wire(start, end, grid):
             if check == 400:
                 return False
 
-
             index = 0
             while index < len(paths) and paths[index][0] >= heuristik:
                 index += 1
@@ -151,13 +157,18 @@ def connect_wire(start, end, grid):
 
 #
 def choose_wires(num, wires):
-    wires_chosen = []
+    index_chosen = []
 
-    while len(wires_chosen) < num:
+    while len(index_chosen) < num:
         index = randint(1, len(wires)) - 1
 
-        if index not in wires_chosen:
-            wires_chosen.append(wires[index])
+        if index not in index_chosen:
+            index_chosen.append(index)
+
+    wires_chosen = []
+
+    for index in index_chosen:
+        wires_chosen.append(wires[index])
 
     return wires_chosen
 
@@ -172,6 +183,7 @@ def revert_mutation(grid, wires, coordinates):
 #
 def mutate_wires(grid, wires):
     old_coordinates = []
+    paths = []
 
     for wire in wires:
         old_coordinates.append(wire.coordinates)
@@ -179,30 +191,26 @@ def mutate_wires(grid, wires):
 
     for wire in wires:
         path = connect_wire(wire.start, wire.end, grid)
+        paths.append(path)
 
-        if path == False:
-            revert_mutation(grid, wires, old_coordinates)
-            return False
-
-        Wire.lay(wire, grid, path)
-
-    return old_coordinates
+    if False in paths:
+        for i in range(len(wires)):
+            Wire.lay(wires[i], grid, old_coordinates[i])
+    else:
+        for i in range(len(wires)):
+            Wire.lay(wires[i], grid, paths[i])
 
 
 #
 def hillclimber(grid, wires):
     conflicts = num_conflicts(grid)
+    num_tries = 0
 
     while conflicts > 0:
-        wires_chosen = choose_wires(2, wires)
-        wire_backup = mutate_wires(grid, wires_chosen)
+        wires_chosen = choose_wires(5, wires)
+        mutate_wires(grid, wires_chosen)
+        conflicts = num_conflicts(grid)
 
-        if wire_backup:
-            new_conflicts = num_conflicts(grid)
-
-            if new_conflicts > conflicts:
-                revert_mutation(grid, wires_chosen, wire_backup)
-            else:
-                conflicts = new_conflicts
-
-
+        num_tries += 1
+        if num_tries > 10000:
+            break

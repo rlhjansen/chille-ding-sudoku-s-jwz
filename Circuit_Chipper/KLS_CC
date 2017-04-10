@@ -96,7 +96,7 @@ def num_conflicts(grid):
                         num_wires += 1
 
                 if num_wires > 1:
-                    conflicts += num_wires -2
+                    conflicts += num_wires -1
 
     return conflicts
 
@@ -148,11 +148,12 @@ def print_grid(grid):
 
 
 # Show the most important statistics about the program
-def print_stats():
+def print_stats(grid):
     print("There were {} iterations."
           .format(Search_Algorithms.Wire.wires_layed))
     print("The total length of the wires is {}."
           .format(Search_Algorithms.Wire.wire_length))
+    print("Conflicts left is:", num_conflicts(grid))
 
 
 # initialize connections
@@ -171,11 +172,17 @@ def init_connections(netlist, grid):
 
 
 gate_coords = {}
-base = make_base("print_2")
-grid = set_gates("print_2", base)
-netlist = netlists.netlist_6
+base = make_base("print_1")
+grid = set_gates("print_1", base)
+netlist = netlists.netlist_1
 wires = init_connections(netlist, grid)
+for wire in wires:
+    print(wire.name, Search_Algorithms.Wire.length(wire), end=' | ')
+print()
 Search_Algorithms.hillclimber(grid, wires)
+for wire in wires:
+    print(wire.name, Search_Algorithms.Wire.length(wire), end=' | ')
+print()
 print_grid(grid)
-print_stats()
+print_stats(grid)
 
