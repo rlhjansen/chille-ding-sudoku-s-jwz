@@ -101,41 +101,6 @@ def num_conflicts(grid):
     return conflicts
 
 
-# lay a connection between two gates
-def make_connection(c1, c2, n, grid):
-    location = (c1[1], c1[2])
-    x_moves = c1[1] - c2[1]
-    y_moves = c1[2] - c2[2]
-    while x_moves != 0 or y_moves != 0:
-        if randint(0, 1) == 0 and x_moves != 0:
-            if x_moves > 0:
-                location = (location[0] - 1, location[1])
-                x_moves = x_moves - 1
-            else:
-                location = (location[0] + 1, location[1])
-                x_moves = x_moves + 1
-            string = grid[0][location[1]][location[0]] + 'W' + str(n)
-            grid[0][location[1]][location[0]] = string
-        elif y_moves != 0:
-            if y_moves > 0:
-                location = (location[0], location[1] - 1)
-                y_moves = y_moves - 1
-            else:
-                location = (location[0], location[1] + 1)
-                y_moves = y_moves + 1
-            string = grid[0][location[1]][location[0]] + 'W' + str(n)
-            grid[0][location[1]][location[0]] = string
-        else:
-            if x_moves > 0:
-                location = (location[0] - 1, location[1])
-                x_moves = x_moves - 1
-            else:
-                location = (location[0] + 1, location[1])
-                x_moves = x_moves + 1
-            string = grid[0][location[1]][location[0]] + 'W' + str(n)
-            grid[0][location[1]][location[0]] = string
-
-
 # print the chip.
 def print_grid(grid):
     for i in range(len(grid)):

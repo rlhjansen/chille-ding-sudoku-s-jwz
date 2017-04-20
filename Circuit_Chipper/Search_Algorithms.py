@@ -15,9 +15,65 @@ def print_grid(grid):
         print("\n")
 
 
+#
+class Grid:
+    """The class for a grid that contains Nodes"""
+
+    def __init__(self, print):
+        self.nodes = {}
+        self.gates = {}
+        self.wires = []
+
+        with open(print) as file:
+            line = file.readline()
+
+            line = line.split()
+            self.x_length = int(line[0])
+            self.y_length = int(line[1])
+            self.z_length = int(line[2])
+
+            for z in range(self.z_length):
+                for y in range(self.y_length):
+                    for x in range(self.x_length):
+                        self.nodes[(z, y, x)] = Node((z, y, x))
+
+            line = file.readline()
+            while line:
+                line = line.replace("(", "").replace(")", "").replace(",", "")
+                line = line.split(" ")
+
+
+
+                self.nodes[(int(line[3]), int(line[2]), int(line[1]))].add_gate()
+                line = file.readline()
+
+        file.close()
+
+    def print(self):
+        print_grid = [[[self.grid[z][y][x]. for z in range(self.z_length)]
+                      for y in range(self.y_length)]
+                     for x in range(self.x_length)]
+
+
+# These nodes are data points that store wires, gates and the heat.
+class Node:
+    """Class for all nodes in the grid"""
+
+    def __init__(self, coordinate):
+        self.objects = []
+        self.coordinate = coordinate
+        self.heat = 0
+
+    def add_gate(self):
+        gate = Gate(self.coordinate)
+
+        self.objects.append(gate)
+        return gate
+
+
 # Stores the wire route, name, length and some helpful functions.
 class Wire:
-    'class for all wires'
+    """class for all wires"""
     wire_length = 0
     wires_layed = 0
 
@@ -69,6 +125,16 @@ class Wire:
 
     def length(self):
         return len(self.coordinates)
+
+
+class Gate:
+    """Class for all gates"""
+    num_gates = 0
+
+    def __init__(self, coordinate):
+        self.coordinate = coordinate
+        Gate.num_gates += 1
+        self.name = 'G' + str(Gate.num_gates) + '.'
 
 
 # Calculate manhattan distance between two points
