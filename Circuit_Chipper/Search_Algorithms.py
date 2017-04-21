@@ -92,6 +92,7 @@ class Grid:
                        for y in range(self.y_length)]
                       for z in range(self.z_length)]
 
+        print()
         print("This is a grid")
         for layer in print_grid:
             for row in layer:
@@ -112,6 +113,7 @@ class Grid:
                     if node.objects and type(node.objects[0]) is Gate:
                         print_grid[z][y][x] = node.name()
 
+        print("-----------------")
         print("This is a heatmap")
         for layer in print_grid:
             for row in layer:
@@ -162,6 +164,7 @@ class Wire:
     """class for all wires"""
     wire_length = 0
     wires_layed = 0
+    heat = 1
 
     def __init__(self, grid, coordinates, start, end):
         self.name = 'W' + str(1 + Wire.wires_layed)
@@ -206,18 +209,19 @@ class Wire:
 class Gate:
     """Class for all gates"""
     num_gates = 0
+    heat = 2
 
     def __init__(self, coordinate):
         self.coordinate = coordinate
         Gate.num_gates += 1
         self.name = 'G' + str(Gate.num_gates)
 
-    def heat_point(self, grid, radius):
-        heat = radius
+    def heat_point(self, grid):
+        heat = Gate.heat
         last_nodes = [list(self.coordinate)]
         directions = [[1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]
 
-        for length in range(radius):
+        for length in range(Gate.heat):
             length += 1
             next_nodes = []
 
@@ -306,13 +310,11 @@ def num_conflicts(grid):
 
 
 # Determines if a line is too hard to lay, and skips it for now.
-def stop(tries, heuristik):
+def stop(tries, heuristik, manhat_distance):
     if heuristik < 1:
         return False
-    elif tries > float(1/heuristik) * 1000:
-        print("stopped, heuristik = {} and tries is {}" .format(heuristik, tries))
-        return True
-    if tries > 40000:
+    elif tries > float(1/heuristik) * manhat_distance * 100:
+        # print("stopped, heuristik = {} and tries is {}" .format(heuristik, tries))
         return True
     return False
 
@@ -341,7 +343,7 @@ def connect_wire(start, end, grid):
             new_path = [heuristik] + path[1:] + [pointer]
 
             check += 1
-            if stop(check, heuristik):
+            if stop(check, heuristik, distance_heuristik(start, end)):
                 return False
 
             index = 0
@@ -377,8 +379,8 @@ def choose_wires(num, wires):
     return wires_chosen
 
 
-# Can make conflicts between mutating wires
-def mutate_wires_all(grid, wires):
+# Won't make conflicts when laying wires.
+def mutate_wires_careful(grid, wires):
     old_coordinates = []
     paths = []
 
@@ -388,18 +390,20 @@ def mutate_wires_all(grid, wires):
 
     for wire in wires:
         path = connect_wire(wire.start.coordinate, wire.end.coordinate, grid)
+
+        if path != False:
+            wire.lay(grid, path)
+
         paths.append(path)
 
     if False in paths:
         for i in range(len(wires)):
+            wires[i].remove(grid)
             wires[i].lay(grid, old_coordinates[i])
-    else:
-        for i in range(len(wires)):
-            wires[i].lay(grid, paths[i])
 
 
 # Can make conflicts between mutating wires and wires that failed to mutate.
-def mutate_wires(grid, wires):
+def mutate_wires_risky(grid, wires):
     old_coordinates = []
 
     for wire in wires:
@@ -416,36 +420,95 @@ def mutate_wires(grid, wires):
             wire.lay(grid, old_coordinates.pop())
 
 
-# Can't create conflicts, but has stricter rules. ****BUGGED****
-def mutate_wires_safe(grid, wires):
+# Tolerates conflicts, only if there are less then before, hillclimber.
+def mutate_wires_hillclimber(grid, wires):
     old_coordinates = []
+    paths = []
+    old_conflicts = num_conflicts(grid)
 
     for wire in wires:
-        old_coordinates = [wire.coordinates] + old_coordinates
+        old_coordinates.append(wire.coordinates)
         wire.remove(grid)
 
-    for i in range(len(wires)):
-        path = connect_wire(wires[i].start.coordinate, wires[i].end.coordinate, grid)
+    for wire in wires:
+        path = connect_wire(wire.start.coordinate, wire.end.coordinate, grid)
+        paths.append(path)
 
-        if path:
-            wires[i].lay(grid, path)
+    for i in range(len(wires)):
+        if paths[i] != False:
+            wires[i].lay(grid, paths[i])
         else:
-            for j in range(i):
-                wires[j].remove(grid)
-                wires[j].lay(grid, old_coordinates[j])
+            wires[i].lay(grid, old_coordinates[i])
+
+    if num_conflicts(grid) > old_conflicts:
+        for i in range(len(wires)):
+            wires[i].remove(grid)
             wires[i].lay(grid, old_coordinates[i])
 
 
 #
-def hillclimber(grid, wires):
+def solve_conflicts_duo(grid, wires):
     num_tries = 0
+    conflicts = num_conflicts(grid)
+    num_wires = 1
 
-    while num_conflicts(grid) > 0:
-        wires_chosen = choose_wires(5, wires)
-        mutate_wires(grid, wires_chosen)
+    while conflicts > 0 and num_wires < 10:
+        while num_tries < 1000 + num_wires * num_wires * 100:
+            wires_chosen = choose_wires(num_wires, wires)
+            mutate_wires_careful(grid, wires_chosen)
+            new_conflicts = num_conflicts(grid)
+
+            if new_conflicts < conflicts:
+                conflicts = new_conflicts
+                num_tries = 0
+
+            num_tries += 1
+
+        num_tries = 0
+        grid.print()
+        print_stats(grid)
+
+        while num_tries < 1000 + num_wires * num_wires * 100:
+            wires_chosen = choose_wires(num_wires, wires)
+            mutate_wires_careful(grid, wires_chosen)
+            new_conflicts = num_conflicts(grid)
+
+            if new_conflicts < conflicts:
+                conflicts = new_conflicts
+                num_tries = 0
+
+            num_tries += 1
+
+        num_tries = 0
+        grid.print()
+        print_stats(grid)
+
+        num_wires += 1
+
+
+#
+def solve_conflicts_solo(grid, wires):
+    num_tries = 0
+    conflicts = num_conflicts(grid)
+    num_wires = 1
+
+    while conflicts > 0:
+        wires_chosen = choose_wires(num_wires, wires)
+        mutate_wires_hillclimber(grid, wires_chosen)
+        new_conflicts = num_conflicts(grid)
+
+        if new_conflicts < conflicts:
+            conflicts = new_conflicts
+            num_tries = 0
 
         num_tries += 1
-        if num_tries > 10000:
+        if num_tries > 1000 + num_wires * num_wires * 100:
+            num_tries = 0
+            num_wires += 1
+            grid.print()
+            print_stats(grid)
+
+        if num_wires > 10:
             break
 
 
@@ -460,7 +523,7 @@ def print_stats(grid):
 chip = Grid("print_1")
 gates = chip.gates.values()
 for gate in gates:
-    gate.heat_point(chip, 2)
+    gate.heat_point(chip)
 
 if False:
     start = chip.gates[netlists.netlist_1[0][0]]
@@ -471,8 +534,8 @@ if False:
         chip.wires.append(Wire(chip, wire_path, start, end))
 
 if True:
-    wires = chip.init_wires(netlists.netlist_1)
-    hillclimber(chip, wires)
+    wires = chip.init_wires(netlists.netlist_3)
+    solve_conflicts_solo(chip, wires)
 chip.print_heatmap()
 chip.print()
 print_stats(chip)
