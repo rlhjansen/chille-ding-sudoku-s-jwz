@@ -104,6 +104,14 @@ class Grid:
                        for y in range(self.y_length)]
                       for z in range(self.z_length)]
 
+        for z in range(self.z_length):
+            for y in range(self.y_length):
+                for x in range(self.x_length):
+                    node = self.nodes[(z, y, x)]
+
+                    if node.objects and type(node.objects[0]) is Gate:
+                        print_grid[z][y][x] = node.name()
+
         print("This is a heatmap")
         for layer in print_grid:
             for row in layer:
@@ -243,6 +251,37 @@ def distance_heuristik(start, end):
     return x + y + z
 
 
+#
+def calculate_heuristik(path, pointer, end, grid):
+    heuristik = distance_heuristik(pointer, end)
+    manhat_distance = heuristik
+    end_heat = grid.nodes[(1, end[1], end[2])].heat
+
+    if manhat_distance < end_heat:
+        heuristik -= grid.nodes[(1, end[1], end[2])].heat - manhat_distance
+
+    heuristik += grid.nodes[pointer].heat + 1
+
+    return heuristik
+
+
+#
+def calculate_Astar_heuristik(path, pointer, end, grid):
+    heuristik = distance_heuristik(pointer, end)
+    manhat_distance = heuristik
+    end_heat = grid.nodes[(1, end[1], end[2])].heat
+
+    if manhat_distance < end_heat:
+        for heat in range(1 + grid.nodes[(1, end[1], end[2])].heat - manhat_distance):
+            heuristik -= heat
+
+    for node in path[2:]:
+        heuristik += grid.nodes[node].heat + 1
+    heuristik += grid.nodes[pointer].heat + 1
+
+    return heuristik
+
+
 # Check if a wire can be placed on the coordinates
 def legal_position(position, grid, end):
     position = tuple(position)
@@ -266,9 +305,20 @@ def num_conflicts(grid):
     return conflicts
 
 
+# Determines if a line is too hard to lay, and skips it for now.
+def stop(tries, heuristik):
+    if heuristik < 1:
+        return False
+    elif tries > float(1/heuristik) * 1000:
+        print("stopped, heuristik = {} and tries is {}" .format(heuristik, tries))
+        return True
+    if tries > 40000:
+        return True
+    return False
+
+
 # Draw a wire from start to end with the A-star method.
 def connect_wire(start, end, grid):
-
     paths = [[distance_heuristik(start, end), start]]
     directions = ((0, 0, 1), (0, 0, -1), (0, 1, 0), (0, -1, 0), (1, 0, 0),
                   (-1, 0, 0))
@@ -282,15 +332,16 @@ def connect_wire(start, end, grid):
 
             for i in range(len(pointer)):
                 pointer[i] += direction[i]
+            pointer = tuple(pointer)
 
-            if not(legal_position(pointer, grid, end)) or tuple(pointer) in path:
+            if not(legal_position(pointer, grid, end)) or pointer in path:
                 continue
 
-            heuristik = len(path) - 1 + distance_heuristik(pointer, end) + grid.nodes[tuple(pointer)].heat
-            new_path = [heuristik] + path[1:] + [tuple(pointer)]
+            heuristik = calculate_heuristik(path, pointer, end, grid)
+            new_path = [heuristik] + path[1:] + [pointer]
 
             check += 1
-            if check == 400:
+            if stop(check, heuristik):
                 return False
 
             index = 0
@@ -394,7 +445,7 @@ def hillclimber(grid, wires):
         mutate_wires(grid, wires_chosen)
 
         num_tries += 1
-        if num_tries > 100:
+        if num_tries > 10000:
             break
 
 
@@ -406,14 +457,22 @@ def print_stats(grid):
     print("Conflicts left is:", num_conflicts(grid))
 
 
-seed(2)
 chip = Grid("print_1")
 gates = chip.gates.values()
 for gate in gates:
     gate.heat_point(chip, 2)
-wires = chip.init_wires(netlists.netlist_1)
-hillclimber(chip, wires)
+
+if False:
+    start = chip.gates[netlists.netlist_1[0][0]]
+    end = chip.gates[netlists.netlist_1[0][1]]
+
+    wire_path = connect_wire(start.coordinate, end.coordinate, chip)
+    if wire_path:
+        chip.wires.append(Wire(chip, wire_path, start, end))
+
+if True:
+    wires = chip.init_wires(netlists.netlist_1)
+    hillclimber(chip, wires)
+chip.print_heatmap()
 chip.print()
 print_stats(chip)
-print(chip.wires[2].name)
-print(chip.wires[2].coordinates)
