@@ -6,10 +6,57 @@ from random import seed
 import netlists
 
 
-# Return the path of a wire that goes manhattan distance with conflicts.
-def connect_conflicting_wire(start, end):
-    pointer = start
-    path = []
+#
+def clean_ends(path, grid):
+    if path[2:-1] == []:
+        return True
+
+    start_node = grid.nodes[path[2]]
+    if start_node.objects == []:
+        return True
+
+    end_node = grid.nodes[path[-2]]
+    if end_node.objects == []:
+        return True
+
+    return False
+
+
+#
+def existing_position(position, grid):
+    position = tuple(position)
+
+    if position not in grid.nodes:
+        return False
+
+    return True
+
+
+#
+def empty_neighbours(node, legal_node, grid):
+    coord = node.coordinate
+    neighbours = ((0, coord[1], coord[2] + 1), (0, coord[1], coord[2] - 1),
+                  (0, coord[1] + 1, coord[2]), (0, coord[1] - 1, coord[2]))
+
+    for neighbour in neighbours:
+        if legal_position(neighbour, grid, legal_node.coordinate):
+            return grid.nodes[neighbour]
+
+    return grid.nodes[(1, node.coordinate[1], node.coordinate[2])]
+
+
+# Draw a conflicting wire with a free start and end.
+def connect_conflicting_wire(start_gate, end_gate, grid):
+    start_node = empty_neighbours(start_gate, end_gate, grid)
+    end_node = empty_neighbours(end_gate, start_gate, grid)
+    pointer = start_node.coordinate
+    path = [pointer]
+    start = start_node.coordinate
+    end = end_node.coordinate
+
+    if pointer[0] == 0:
+        path.append((1, pointer[1], pointer[2]))
+    path.append((2, pointer[1], pointer[2]))
 
     x_moves = start[2] - end[2]
     if x_moves < 0:
@@ -27,15 +74,19 @@ def connect_conflicting_wire(start, end):
 
     while x_moves != 0 or y_moves != 0:
         if y_moves == 0 or (x_moves != 0 and randint(0, 1) == 0):
-            pointer = (0, pointer[1], pointer[2] - x_direction)
+            pointer = (2, pointer[1], pointer[2] - x_direction)
             x_moves -= 1
         else:
-            pointer = (0, pointer[1] - y_direction, pointer[2])
+            pointer = (2, pointer[1] - y_direction, pointer[2])
             y_moves -= 1
 
         path.append(pointer)
 
-    return path[:-1]
+    path.append((1, end_node.coordinate[1], end_node.coordinate[2]))
+    if end[0] == 0:
+        path.append(end)
+
+    return path
 
 
 #
@@ -59,7 +110,7 @@ class Grid:
             for z in range(self.z_length):
                 for y in range(self.y_length):
                     for x in range(self.x_length):
-                        self.nodes[(z, y, x)] = Node((z, y, x))
+                        self.nodes[(z, y, x)] = Node((z, y, x), self)
 
             # Set all gates in the correct nodes.
             line = file.readline()
@@ -68,7 +119,7 @@ class Grid:
                 line = line.split(" ")
 
                 coordinate = (int(line[3]), int(line[2]), int(line[1]))
-                gate = Gate(coordinate)
+                gate = Gate(coordinate, self)
                 self.nodes[coordinate].add(gate)
                 self.gates[int(line[0])] = gate
 
@@ -77,14 +128,29 @@ class Grid:
         file.close()
 
     def init_wires(self, netlist):
-        for connection in netlist:
-            start = self.gates[connection[0]]
-            end = self.gates[connection[1]]
+        self.add_wires(netlist)
+        gates = self.gates.values()
+        gates = sorted(gates, key=lambda gate: gate.num_wires(), reverse=True)
 
-            wire_path = connect_conflicting_wire(start.coordinate, end.coordinate)
-            self.wires.append(Wire(self, wire_path, start, end))
+        for gate in gates:
+            for wire in gate.wires:
+                if wire.coordinates == False:
+                    wire_path = connect_conflicting_wire(wire.start, wire.end, self)
+                    wire.lay(self, wire_path)
 
         return self.wires
+
+    def add_wires(self, netlist):
+        for connection in netlist:
+            start_gate = self.gates[connection[0]]
+            end_gate = self.gates[connection[1]]
+            start_node = self.nodes[start_gate.coordinate]
+            end_node = self.nodes[end_gate.coordinate]
+
+            wire = Wire(self, False, start_node, end_node)
+            self.wires.append(wire)
+            start_gate.add(wire)
+            end_gate.add(wire)
 
     def print(self):
         print_grid = [[[self.nodes[(z, y, x)].name()
@@ -125,16 +191,19 @@ class Grid:
 class Node:
     """Class for all nodes in the grid"""
 
-    def __init__(self, coordinate):
+    def __init__(self, coordinate, grid):
         self.objects = []
         self.coordinate = coordinate
         self.heat = 0
+        self.grid = grid
 
     def add(self, object):
         self.objects.append(object)
+        self.heat_point(object.heat)
 
     def remove(self, object):
         self.objects.remove(object)
+        self.remove_heat(object.heat)
 
     def name(self):
         name = ''
@@ -150,13 +219,73 @@ class Node:
         else:
             return 0
 
-    def valid(self, end):
+    def valid(self, end_coord):
         if not self.objects:
             return True
-        elif self.coordinate == end and type(self.objects[0]) == Gate:
+        elif self.coordinate == end_coord and type(self.objects[0]) == Gate:
             return True
 
         return False
+
+    def heat_point(self, radius):
+        heat = radius
+        last_nodes = [list(self.coordinate)]
+        directions = [[1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]
+
+        for length in range(radius):
+            length += 1
+            next_nodes = []
+
+            for node in last_nodes:
+                for direction in directions:
+                    next_node = [node[0] + direction[0],
+                                 node[1] + direction[1],
+                                 node[2] + direction[2]]
+
+                    x = abs(self.coordinate[0] - next_node[0])
+                    y = abs(self.coordinate[1] - next_node[1])
+                    z = abs(self.coordinate[2] - next_node[2])
+
+                    if (x + y + z < length) or (next_node in next_nodes) or tuple(next_node) not in self.grid.nodes:
+                        continue
+                    next_nodes.append(next_node)
+
+            for next_node in next_nodes:
+                self.grid.nodes[tuple(next_node)].heat += heat
+
+            last_nodes = next_nodes
+            heat -= 1
+
+    def remove_heat(self, radius):
+        heat = radius
+        last_nodes = [list(self.coordinate)]
+        directions = [[1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]
+
+        for length in range(radius):
+            length += 1
+            next_nodes = []
+
+            for node in last_nodes:
+                for direction in directions:
+                    next_node = [node[0] + direction[0],
+                                 node[1] + direction[1],
+                                 node[2] + direction[2]]
+
+                    x = abs(self.coordinate[0] - next_node[0])
+                    y = abs(self.coordinate[1] - next_node[1])
+                    z = abs(self.coordinate[2] - next_node[2])
+
+                    if (x + y + z < length) or (
+                        next_node in next_nodes) or tuple(
+                            next_node) not in self.grid.nodes:
+                        continue
+                    next_nodes.append(next_node)
+
+            for next_node in next_nodes:
+                self.grid.nodes[tuple(next_node)].heat -= heat
+
+            last_nodes = next_nodes
+            heat -= 1
 
 
 # Stores the wire route, name, length and some helpful functions.
@@ -167,12 +296,13 @@ class Wire:
     heat = 1
 
     def __init__(self, grid, coordinates, start, end):
-        self.name = 'W' + str(1 + Wire.wires_layed)
+        Wire.wires_layed += 1
+        self.name = 'W' + str(Wire.wires_layed)
         self.coordinates = coordinates
-        Wire.lay(self, grid, coordinates)
-        self.conflicts = Wire.num_conflicts(self, grid)
         self.start = start
         self.end = end
+        self.heat = Wire.heat
+        self.conflicts = 0
 
     def remove(self, grid):
         for coordinate in self.coordinates:
@@ -188,6 +318,8 @@ class Wire:
         for coordinate in self.coordinates:
             grid.nodes[coordinate].add(self)
             Wire.wire_length += 1
+
+        self.conflicts = Wire.num_conflicts(self, grid)
 
     def num_conflicts(self, grid):
         conflicts = 0
@@ -211,39 +343,19 @@ class Gate:
     num_gates = 0
     heat = 2
 
-    def __init__(self, coordinate):
+    def __init__(self, coordinate, grid):
         self.coordinate = coordinate
         Gate.num_gates += 1
         self.name = 'G' + str(Gate.num_gates)
+        self.grid = grid
+        self.heat = Gate.heat
+        self.wires = []
 
-    def heat_point(self, grid):
-        heat = Gate.heat
-        last_nodes = [list(self.coordinate)]
-        directions = [[1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]
+    def add(self, wire):
+        self.wires.append(wire)
 
-        for length in range(Gate.heat):
-            length += 1
-            next_nodes = []
-
-            for node in last_nodes:
-                for direction in directions:
-                    next_node = [node[0] + direction[0],
-                                 node[1] + direction[1],
-                                 node[2] + direction[2]]
-
-                    x = abs(self.coordinate[0] - next_node[0])
-                    y = abs(self.coordinate[1] - next_node[1])
-                    z = abs(self.coordinate[2] - next_node[2])
-
-                    if (x + y + z < length) or (next_node in next_nodes) or tuple(next_node) not in grid.nodes:
-                        continue
-                    next_nodes.append(next_node)
-
-            for next_node in next_nodes:
-                grid.nodes[tuple(next_node)].heat += heat
-
-            last_nodes = next_nodes
-            heat -= 1
+    def num_wires(self):
+        return len(self.wires)
 
 
 # Calculate manhattan distance between two points
@@ -287,12 +399,12 @@ def calculate_Astar_heuristik(path, pointer, end, grid):
 
 
 # Check if a wire can be placed on the coordinates
-def legal_position(position, grid, end):
+def legal_position(position, grid, end_coord):
     position = tuple(position)
 
     if position not in grid.nodes:
         return False
-    elif not grid.nodes[position].valid(end):
+    elif not grid.nodes[position].valid(end_coord):
         return False
 
     return True
@@ -440,6 +552,14 @@ def mutate_wires_hillclimber(grid, wires):
         else:
             wires[i].lay(grid, old_coordinates[i])
 
+    for i in range(len(wires)):
+        if wires[i].coordinates == []:
+            continue
+
+        if grid.nodes[wires[i].coordinates[0]].conflicts() > 0 or grid.nodes[wires[i].coordinates[-1]].conflicts() > 0:
+            wires[i].remove(grid)
+            wires[i].lay(grid, old_coordinates[i])
+
     if num_conflicts(grid) > old_conflicts:
         for i in range(len(wires)):
             wires[i].remove(grid)
@@ -499,9 +619,11 @@ def solve_conflicts_solo(grid, wires):
 
         if new_conflicts < conflicts:
             conflicts = new_conflicts
+            print(new_conflicts)
             num_tries = 0
 
         num_tries += 1
+
         if num_tries > 1000 + num_wires * num_wires * 100:
             num_tries = 0
             num_wires += 1
@@ -520,22 +642,11 @@ def print_stats(grid):
     print("Conflicts left is:", num_conflicts(grid))
 
 
-chip = Grid("print_1")
+chip = Grid("print_2")
 gates = chip.gates.values()
-for gate in gates:
-    gate.heat_point(chip)
-
-if False:
-    start = chip.gates[netlists.netlist_1[0][0]]
-    end = chip.gates[netlists.netlist_1[0][1]]
-
-    wire_path = connect_wire(start.coordinate, end.coordinate, chip)
-    if wire_path:
-        chip.wires.append(Wire(chip, wire_path, start, end))
-
-if True:
-    wires = chip.init_wires(netlists.netlist_3)
-    solve_conflicts_solo(chip, wires)
+wires = chip.init_wires(netlists.netlist_6)
+chip.print()
+solve_conflicts_solo(chip, wires)
 chip.print_heatmap()
 chip.print()
 print_stats(chip)
