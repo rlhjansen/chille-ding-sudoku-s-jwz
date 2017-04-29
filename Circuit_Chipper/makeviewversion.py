@@ -84,24 +84,36 @@ def CornerCornerPiece(StartCorner, EndCorner, size):
 
 
 # corner = [x,y,z, 'from', 'to']
-# return = List of 4*[x, y, z] + lijs respectievelijk positie in cubus
+# return = List of 4*[x, y, z] + lijst respectievelijk positie in cubus
 # zie kubus.png
+# 'and' part =  to do
 def GetPoints(corner, size):
-    # left/top face options
+    # left/top face options and right/bottom
     if (corner[3] == 'x+' and corner[4] == 'y+') or \
         (corner[3] == 'y-' and corner[4] == 'x-'):
 
-    # back/top face options
+    # back/top face options and front/bottom
     if (corner[3] == 'z-' and corner[4] == 'y+') or \
         (corner[3] == 'y-' and corner[4] == 'z+'):
 
-    # right/top face options
+    # right/top face options and left/bottom
     if (corner[3] == 'x-' and corner[4] == 'y+') or \
         (corner[3] == 'y-' and corner[4] == 'x+'):
 
-    # front/top face options
+    # front/top face options and back/bottom
     if (corner[3] == 'z+' and corner[4] == 'y+') or \
         (corner[3] == 'y-' and corner[4] == 'z-'):
+
+    # front/right face options and back/left
+
+    # front/left face options and back/right
+
+
+
+
+
+
+
 
 
 for i in testList:
