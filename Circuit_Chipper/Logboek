@@ -22,3 +22,18 @@ het oplossen van conflicts.
 Jochem, 23/03
 Ik ga een functie schrijven die een wire gaat leggen van een gate naar een
 andere gate.
+
+
+Reitze 29/04
+bezig functies te schrijven voor visualizatie, vnml in makeviewversion.py
+displayer & displayObjects was waar ik in werkte om openGL te leren kennen,
+kijk er ook eens naar en rommel wat aan. orgineel wat ik hier voor gebruikte
+was 'pente' van https://www.pygame.org/tags/3d  .
+ik loop er inmiddel tegenaan dat het lastig te visualizeren welke punten horen
+bij welke kruising van lijnen/ balken
+het lijkt er nu op dat ik dit op los door 2 functies
+1 om het knooppunt van coordinaten in de openGL te voorzien en 1 om deze samen
+met een andere set punten om te zetten tot de buitenzijden van de balk
+bij deze tweede functie zul de het 'to' deel van de eerste corner bepalen hoe
+de balk in elkaar gezet word
+
