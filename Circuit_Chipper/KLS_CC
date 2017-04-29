@@ -141,13 +141,20 @@ base = make_base("print_1")
 grid = set_gates("print_1", base)
 netlist = netlists.netlist_1
 wires = init_connections(netlist, grid)
+wirelist = []
 for wire in wires:
     print(wire.name, Search_Algorithms.Wire.length(wire), end=' | ')
+    coordlist = []
+    coordlist.append(wire.start)
+    for i in wire.coordinates:
+        coordlist.append(i)
+    coordlist.append(wire.end)
+    wirelist.append(coordlist)
 print()
+print(wirelist)
 Search_Algorithms.hillclimber(grid, wires)
 for wire in wires:
     print(wire.name, Search_Algorithms.Wire.length(wire), end=' | ')
 print()
 print_grid(grid)
 print_stats(grid)
-

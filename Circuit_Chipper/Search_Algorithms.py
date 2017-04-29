@@ -642,9 +642,9 @@ def print_stats(grid):
     print("Conflicts left is:", num_conflicts(grid))
 
 
-chip = Grid("print_2")
+chip = Grid("print_1")
 gates = chip.gates.values()
-wires = chip.init_wires(netlists.netlist_6)
+wires = chip.init_wires(netlists.netlist_1)
 chip.print()
 solve_conflicts_solo(chip, wires)
 chip.print_heatmap()

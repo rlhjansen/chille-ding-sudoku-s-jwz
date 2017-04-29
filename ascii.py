@@ -1,57 +1,49 @@
-'''
-ASCII Art maker
-Creates an ascii art image from an arbitrary image
-Created on 7 Sep 2009
+OCEAN = [[98,68,80,68,28],
+ [63,73,48,63,30],
+ [93,48,43,75,50],
+ [82.5,30.5,68.7,88.8,25.5],
+ [70,25,28,45,98],
+ [85,85,60,93,15],
+ [93,28,45,70,68],
+ [50,70,18,70,18],
+ [88,48,35,80,70],
+ [88,78,80,70,10],
+ [93,75,70,90,28],
+ [75,25,28,40,88],
+ [93,25,79,22,43],
+ [68,50,33,55,63],
+ [80,28,45,53,12],
+ [68,98,60,40,35],
+ [83,52,72,54,52],
+ [80,85,65,100,50],
+ [63,55,35,65,55],
+ [88,100,45,55,70],
+ [68,55,68,83,25],
+ [88,55,63,63,60],
+ [68,75,70,80,20],
+ [95,35,60,78,15],
+ [90,50,53,63,60],
+ [98,75,88,88,15],
+ [83,80,33,60,35],
+ [63,53,48,78,30],
+ [85,50,73,63,10],
+ [95,25,43,75,30],
+ [75,58,53,60,20],
+ [88,65,30,48,68],
+ [98,63,68,68,63],
+ [80,18,28,25,30],
+ [80,13,73,35,43],
+ [58,13,33,63,60]]
 
-@author: Steven Kay
-'''
+OCEAN_AVERAGE = [0,0,0,0,0]
+avgcount = 0
+for i in OCEAN:
+    avgcount +=1
+    for value in i:
+        indexNumber = i.index(value)
+        OCEAN_AVERAGE[indexNumber] += value
 
-from PIL import Image
-import random
-from bisect import bisect
-
-# greyscale.. the following strings represent
-# 7 tonal ranges, from lighter to darker.
-# for a given pixel tonal level, choose a character
-# at random from that range.
-
-greyscale = [
-    " ",
-    " ",
-    ".,-",
-    "_ivc=!/|\\~",
-    "gjez2]/(YL)t[+T7Vf",
-    "mdK4ZGbNDXY5P*Q",
-    "W8KMA",
-    "#%$"
-]
-
-# using the bisect class to put luminosity values
-# in various ranges.
-# these are the luminosity cut-off points for each
-# of the 7 tonal levels. At the moment, these are 7 bands
-# of even width, but they could be changed to boost
-# contrast or change gamma, for example.
-
-zonebounds = [36, 72, 108, 144, 180, 216, 252]
-
-# open image and resize
-# experiment with aspect ratios according to font
-
-im = Image.open(r"c:\test.jpg")
-im = im.resize((160, 75), Image.BILINEAR)
-im = im.convert("L")  # convert to mono
-
-# now, work our way over the pixels
-# build up str
-
-str = ""
-for y in range(0, im.size[1]):
-    for x in range(0, im.size[0]):
-        lum = 255 - im.getpixel((x, y))
-        row = bisect(zonebounds, lum)
-        possibles = greyscale[row]
-        str = str + possibles[random.randint(0, len(possibles) - 1)]
-    str = str + "\n"
-
-print str
+true_avg =[]
+for i in OCEAN_AVERAGE:
+    true_avg.append(i/avgcount)
+print(true_avg)

@@ -1,0 +1,156 @@
+from OpenGL.GL import *
+from OpenGL.GLU import *
+import pygame
+from pygame.locals import *
+from numpy import *
+import sys, os
+import math
+sys.path.append("Data")
+if sys.platform == 'win32':
+    os.environ['SDL_VIDEO_CENTERED'] = '1'
+import GL, displayerObjects
+
+# credits https://www.pygame.org/project/525
+
+pygame.init()
+
+surface = pygame.display.set_mode((800,640),OPENGL|DOUBLEBUF)
+GL.resize(800,640)
+GL.init()
+Textures = glGenTextures(8)
+displayerObjects.main(Textures, 4)
+
+view_angle_x = 90.0
+view_angle_y = 0.0
+view_distance = 1.0
+
+
+cursor_pos = [0.0, 0.0, 0.0] #x, y, z
+
+mouse_pressing = False
+Measurements = [18,7,13]
+array = [[[0 for _ in range(18)] for _ in range(7)] for _ in range(13)]
+print(array)
+
+
+
+def draw():
+    # CLEAR ALL----------------------------------------
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    glLoadIdentity()
+    # BASIC CAMERA VIEW--------------------------------
+    glTranslatef(0.0, 0.0, -51.0 * view_distance)
+    glRotatef(view_angle_x, 1.0, 0.0, 0.0)
+    glRotatef(view_angle_y, 0.0, 1.0, 0.0)
+    # BOARD--------------------------------------------
+    glCallList(1)
+    # PIECES-------------------------------------------
+    wireList = [[(0, 11, 2), (0, 11, 3), (0, 10, 3), (0, 9, 3), (0, 8, 3), (0, 7, 3), (0, 6, 3), (0, 5, 3), (0, 4, 3), (0, 3, 3)], [], [(0, 1, 5), (0, 1, 4), (0, 1, 3), (0, 1, 2)], [(0, 9, 2)], [(0, 1, 14), (0, 1, 13), (0, 2, 13)], [(0, 3, 13), (0, 4, 13), (0, 5, 13), (0, 6, 13)], [(0, 1, 14), (0, 1, 13), (0, 1, 12), (0, 1, 11), (0, 1, 10), (0, 1, 9), (0, 1, 8), (0, 1, 7), (0, 2, 7), (0, 3, 7), (0, 3, 6), (0, 4, 6), (0, 5, 6), (0, 6, 6), (0, 6, 5), (0, 6, 4), (0, 6, 3), (0, 6, 2), (0, 6, 1), (0, 7, 1), (0, 8, 1), (0, 9, 1), (0, 10, 1)], [(0, 10, 1), (0, 10, 2), (0, 10, 3), (0, 9, 3), (0, 8, 3), (0, 8, 4), (0, 8, 5), (0, 7, 5), (0, 7, 6), (0, 7, 7), (0, 6, 7), (0, 6, 8), (0, 5, 8)], [(0, 9, 9), (0, 8, 9), (0, 7, 9), (0, 7, 10), (0, 7, 11), (0, 7, 12)], [(0, 8, 3), (0, 8, 4), (0, 8, 5), (0, 8, 6), (0, 8, 7), (0, 8, 8)], [(0, 8, 1), (0, 8, 2), (0, 7, 2), (0, 6, 2), (0, 6, 3), (0, 6, 4)], [(0, 8, 3), (0, 7, 3), (0, 7, 4), (0, 6, 4), (0, 6, 5), (0, 5, 5), (0, 5, 6), (0, 4, 6), (0, 4, 7)], [(0, 7, 12), (0, 8, 12)], [(0, 8, 14), (0, 7, 14), (0, 6, 14), (0, 6, 13), (0, 5, 13), (0, 5, 12), (0, 4, 12), (0, 3, 12), (0, 2, 12), (0, 2, 11), (0, 2, 10)], [(0, 9, 9), (0, 8, 9), (0, 7, 9), (0, 6, 9), (0, 6, 10), (0, 6, 11)], [(0, 5, 3), (0, 4, 3), (0, 3, 3)], [(0, 6, 11), (0, 7, 11), (0, 8, 11), (0, 8, 12), (0, 9, 12), (0, 10, 12)], [(0, 1, 14), (0, 1, 13), (0, 2, 13), (0, 2, 12), (0, 3, 12), (0, 3, 11), (0, 3, 10), (0, 3, 9), (0, 4, 9), (0, 5, 9), (0, 6, 9), (0, 7, 9), (0, 8, 9), (0, 8, 8), (0, 8, 7), (0, 8, 6), (0, 8, 5), (0, 8, 4), (0, 8, 3)], [(0, 2, 10), (0, 3, 10), (0, 4, 10), (0, 4, 9), (0, 5, 9), (0, 5, 8), (0, 5, 7), (0, 5, 6), (0, 6, 6), (0, 6, 5), (0, 7, 5), (0, 7, 4), (0, 7, 3), (0, 7, 2), (0, 8, 2), (0, 8, 1)], [(0, 2, 15), (0, 2, 14), (0, 2, 13), (0, 2, 12), (0, 2, 11), (0, 2, 10), (0, 2, 9), (0, 2, 8), (0, 2, 7), (0, 2, 6), (0, 2, 5), (0, 2, 4)], [(0, 9, 2), (0, 8, 2), (0, 8, 3), (0, 8, 4), (0, 8, 5), (0, 8, 6), (0, 8, 7), (0, 8, 8), (0, 8, 9), (0, 8, 10), (0, 8, 11), (0, 8, 12), (0, 8, 13), (0, 8, 14)], [(0, 8, 5), (0, 8, 4), (0, 8, 3), (0, 7, 3), (0, 6, 3), (0, 6, 2), (0, 5, 2)], [(0, 8, 14), (0, 7, 14), (0, 7, 13), (0, 7, 12), (0, 6, 12), (0, 5, 12), (0, 4, 12), (0, 3, 12)], [(0, 1, 14), (0, 1, 13), (0, 1, 12), (0, 1, 11), (0, 1, 10), (0, 1, 9), (0, 1, 8), (0, 1, 7), (0, 1, 6), (0, 1, 5), (0, 1, 4), (0, 1, 3), (0, 1, 2)], [(0, 7, 2), (0, 6, 2), (0, 6, 3), (0, 6, 4), (0, 5, 4), (0, 4, 4), (0, 3, 4), (0, 2, 4), (0, 2, 5), (0, 2, 6), (0, 2, 7), (0, 2, 8), (0, 2, 9), (0, 2, 10), (0, 2, 11)], [(0, 3, 14), (0, 3, 15), (0, 3, 16), (0, 4, 16), (0, 5, 16), (0, 6, 16)], [(0, 3, 11), (0, 4, 11), (0, 5, 11), (0, 5, 10), (0, 5, 9), (0, 5, 8), (0, 5, 7), (0, 5, 6), (0, 5, 5), (0, 5, 4), (0, 5, 3), (0, 5, 2)], [(0, 5, 2), (0, 6, 2), (0, 7, 2), (0, 7, 3), (0, 7, 4), (0, 7, 5), (0, 7, 6), (0, 7, 7), (0, 7, 8), (0, 7, 9), (0, 7, 10), (0, 7, 11), (0, 7, 12)], [(0, 9, 9), (0, 9, 8), (0, 9, 7), (0, 8, 7)], [(0, 4, 4), (0, 4, 5), (0, 3, 5), (0, 3, 6), (0, 3, 7), (0, 3, 8), (0, 3, 9), (0, 3, 10), (0, 3, 11)]]
+
+    xpos = -9
+    for x in array:
+        ypos = -3
+        for y in x:
+            zpos = -6
+            for z in y:
+                for wire in wireList:
+                    for i in wire:
+                        if i == (ypos+3-1,zpos+6-1,xpos+9-1):
+                            glPushMatrix()
+                            glTranslatef(xpos * 2.10176, ypos * 2.10176 + 8, zpos * 2.10176)
+                            glCallList(8)
+                            glPopMatrix()
+                zpos += 1
+            ypos += 1
+        xpos += 1
+
+
+
+    # CURSOR-------------------------------------------
+    glPushMatrix()
+    glTranslatef(round(cursor_pos[0] / 2.10176) * 2.10176, cursor_pos[1],
+                 round(cursor_pos[2] / 2.10176) * 2.10176)
+    glCallList(4)
+    glPopMatrix()
+    # HUD----------------------------------------------
+    glPushMatrix()
+    glLoadIdentity()
+    glTranslatef(-0.255, 0.194, -0.5)
+    glBindTexture(GL_TEXTURE_2D, Textures[5])
+    glBegin(GL_QUADS)
+    glTexCoord2f(0.0, 0.0);
+    glVertex3f(0.0, 0.0, 0.0)
+    glTexCoord2f(1.0, 0.0);
+    glVertex3f(0.18, 0.0, 0.0)
+    glTexCoord2f(1.0, 1.0);
+    glVertex3f(0.18, 0.01, 0.0)
+    glTexCoord2f(0.0, 1.0);
+    glVertex3f(0.0, 0.01, 0.0)
+    glEnd();
+    glTranslatef(0.0, -0.01, 0.0)
+    glBindTexture(GL_TEXTURE_2D, Textures[6])
+    glBegin(GL_QUADS)
+    glTexCoord2f(0.0, 0.0);
+    glVertex3f(0.0, 0.0, 0.0)
+    glTexCoord2f(1.0, 0.0);
+    glVertex3f(0.18, 0.0, 0.0)
+    glTexCoord2f(1.0, 1.0);
+    glVertex3f(0.18, 0.01, 0.0)
+    glTexCoord2f(0.0, 1.0);
+    glVertex3f(0.0, 0.01, 0.0)
+    glEnd();
+
+    glDisable(GL_TEXTURE_2D)
+    glColor4f(0.5, 0.5, 0.5, 0.5)
+
+    glBegin(GL_QUADS)
+    glVertex3f(-0.001, -0.0015, 0.0)
+    glVertex3f(0.181, -0.0015, 0.0)
+    glVertex3f(0.181, 0.02, 0.0)
+    glVertex3f(-0.001, 0.02, 0.0)
+    glEnd();
+
+    glColor4f(1.0, 1.0, 1.0, 1.0)
+    glEnable(GL_TEXTURE_2D)
+
+    glPopMatrix()
+    # DRAW TO SCREEN-----------------------------------
+    pygame.display.flip()
+
+
+def get_input():
+    global view_angle_x, view_angle_y, view_distance, cursor_pos, player_turn, mouse_pressing, last_white_piece_played, last_black_piece_played
+    keystate = pygame.key.get_pressed()
+    m_pos = pygame.mouse.get_pos()
+    m_press = pygame.mouse.get_pressed()
+    for event in pygame.event.get():
+        if event.type == QUIT or keystate[K_ESCAPE]:
+            pygame.quit();
+            sys.exit()
+    viewport = glGetIntegerv(GL_VIEWPORT)
+    modelview = glGetDoublev(GL_MODELVIEW_MATRIX)
+    projection = glGetDoublev(GL_PROJECTION_MATRIX)
+    winX = m_pos[0]
+    winY = float(viewport[3]) - m_pos[1]
+    winZ = glReadPixels(winX, winY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT)
+    posX, posY, posZ = gluUnProject(winX, winY, winZ, modelview, projection,
+                                    viewport)
+    cursor_pos = [posX, 0.01, posZ]
+
+    if keystate[K_UP] and view_angle_x < 90:  view_angle_x += 5.0
+    if keystate[K_DOWN] and view_angle_x > 0:  view_angle_x -= 5.0
+    if keystate[K_LEFT]:  view_angle_y += 5.0
+    if keystate[K_RIGHT]:  view_angle_y -= 5.0
+    if keystate[K_PAGEUP] and view_distance < 2.0:  view_distance += .03
+    if keystate[K_PAGEDOWN] and view_distance > 0.5:  view_distance -= .03
+    if keystate[
+        K_END]:  view_distance = 1.0;  view_angle_y = 0.0;  view_angle_x = 90.0
+
+#need change
+def main():
+    while True:
+        get_input()
+        draw()
+
+
+if __name__ == '__main__': main()
