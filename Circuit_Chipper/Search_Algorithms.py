@@ -139,6 +139,8 @@ class Grid:
                     wire_path = connect_conflicting_wire(wire.start, wire.end, self)
                     wire.lay(self, wire_path)
 
+        Wire.wires_layed = 0
+
         return self.wires
 
     def add_wires(self, netlist):
@@ -577,7 +579,7 @@ def solve_conflicts_solo(grid, wires, fig):
 
     ax = fig.add_subplot(111)
     line, = ax.plot(x, y, 'r-')
-    line.axes.set_xlim(0, Wire.wires_layed)
+    line.axes.set_xlim(0, 1)
     line.axes.set_ylim(0, conflicts)
 
     while conflicts > 0:
@@ -620,15 +622,15 @@ def mean_graph(netlist, repeats=100):
     plt.ion()
     fig = plt.figure()
 
-    for net in netlist:
-        grid = [[[]]]
+    for _ in range(repeats):
+        for net in netlist:
+            grid = [[[]]]
 
-        if net < 4:
-            grid = Grid("print_1")
-        elif net < 7:
-            grid = Grid("print_2")
+            if net < 4:
+                grid = Grid("print_1")
+            elif net < 7:
+                grid = Grid("print_2")
 
-        for _ in range(repeats):
             gates = grid.gates.values()
             wires = eval("grid.init_wires(netlists.netlist_" + str(net) + ")")
             solve_conflicts_solo(grid, wires, fig)
