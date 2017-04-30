@@ -1,6 +1,7 @@
 # This file contains various search algorithms, they will be compared on
 # speed and performance. Programs that import this class will gain access
 # to all these algorithms.
+import matplotlib.pyplot as plt
 from random import randint
 from random import seed
 import netlists
@@ -567,50 +568,17 @@ def mutate_wires_hillclimber(grid, wires):
 
 
 #
-def solve_conflicts_duo(grid, wires):
+def solve_conflicts_solo(grid, wires, fig):
     num_tries = 0
     conflicts = num_conflicts(grid)
     num_wires = 1
+    x = [Wire.wires_layed]
+    y = [conflicts]
 
-    while conflicts > 0 and num_wires < 10:
-        while num_tries < 1000 + num_wires * num_wires * 100:
-            wires_chosen = choose_wires(num_wires, wires)
-            mutate_wires_careful(grid, wires_chosen)
-            new_conflicts = num_conflicts(grid)
-
-            if new_conflicts < conflicts:
-                conflicts = new_conflicts
-                num_tries = 0
-
-            num_tries += 1
-
-        num_tries = 0
-        grid.print()
-        print_stats(grid)
-
-        while num_tries < 1000 + num_wires * num_wires * 100:
-            wires_chosen = choose_wires(num_wires, wires)
-            mutate_wires_careful(grid, wires_chosen)
-            new_conflicts = num_conflicts(grid)
-
-            if new_conflicts < conflicts:
-                conflicts = new_conflicts
-                num_tries = 0
-
-            num_tries += 1
-
-        num_tries = 0
-        grid.print()
-        print_stats(grid)
-
-        num_wires += 1
-
-
-#
-def solve_conflicts_solo(grid, wires):
-    num_tries = 0
-    conflicts = num_conflicts(grid)
-    num_wires = 1
+    ax = fig.add_subplot(111)
+    line, = ax.plot(x, y, 'r-')
+    line.axes.set_xlim(0, Wire.wires_layed)
+    line.axes.set_ylim(0, conflicts)
 
     while conflicts > 0:
         wires_chosen = choose_wires(num_wires, wires)
@@ -619,7 +587,6 @@ def solve_conflicts_solo(grid, wires):
 
         if new_conflicts < conflicts:
             conflicts = new_conflicts
-            print(new_conflicts)
             num_tries = 0
 
         num_tries += 1
@@ -627,13 +594,19 @@ def solve_conflicts_solo(grid, wires):
         if num_tries > 1000 + num_wires * num_wires * 100:
             num_tries = 0
             num_wires += 1
-            grid.print()
-            print_stats(grid)
 
         if num_wires > 10:
             break
+        x.append(Wire.wires_layed)
+        y.append(conflicts)
+
+        line.set_xdata(x)
+        line.set_ydata(y)
+        line.axes.set_xlim(0, Wire.wires_layed + 20)
+        fig.canvas.draw()
 
 
+#
 def print_stats(grid):
     print("There were {} iterations."
           .format(Wire.wires_layed))
@@ -642,11 +615,27 @@ def print_stats(grid):
     print("Conflicts left is:", num_conflicts(grid))
 
 
-chip = Grid("print_1")
-gates = chip.gates.values()
-wires = chip.init_wires(netlists.netlist_1)
-chip.print()
-solve_conflicts_solo(chip, wires)
-chip.print_heatmap()
-chip.print()
-print_stats(chip)
+#
+def mean_graph(netlist, repeats=100):
+    plt.ion()
+    fig = plt.figure()
+
+    for net in netlist:
+        grid = [[[]]]
+
+        if net < 4:
+            grid = Grid("print_1")
+        elif net < 7:
+            grid = Grid("print_2")
+
+        for _ in range(repeats):
+            gates = grid.gates.values()
+            wires = eval("grid.init_wires(netlists.netlist_" + str(net) + ")")
+            solve_conflicts_solo(grid, wires, fig)
+
+        grid.print_heatmap()
+        grid.print()
+        print_stats(grid)
+
+mean_graph([1])
+
