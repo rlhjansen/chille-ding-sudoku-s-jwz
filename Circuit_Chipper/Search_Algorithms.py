@@ -115,6 +115,7 @@ class Grid:
 
             # Set all gates in the correct nodes.
             line = file.readline()
+            Gate.num_gates = 0
             while line:
                 line = line.replace("(", "").replace(")", "").replace(",", "")
                 line = line.split(" ")
@@ -139,11 +140,11 @@ class Grid:
                     wire_path = connect_conflicting_wire(wire.start, wire.end, self)
                     wire.lay(self, wire_path)
 
-        Wire.wires_layed = 0
-
         return self.wires
 
     def add_wires(self, netlist):
+        Wire.wires_layed = 0
+
         for connection in netlist:
             start_gate = self.gates[connection[0]]
             end_gate = self.gates[connection[1]]
@@ -188,6 +189,15 @@ class Grid:
             for row in layer:
                 print(row)
             print()
+
+    def __del__(self):
+        print("YAY")
+        for wire in self.wires:
+            del wire
+        for node in self.nodes:
+            del node
+        for gate in self.gates:
+            del gate
 
 
 # These nodes are data points that store wires, gates and the heat.
@@ -294,13 +304,14 @@ class Node:
 # Stores the wire route, name, length and some helpful functions.
 class Wire:
     """class for all wires"""
+    current_wires = 0
     wire_length = 0
     wires_layed = 0
     heat = 1
 
     def __init__(self, grid, coordinates, start, end):
-        Wire.wires_layed += 1
-        self.name = 'W' + str(Wire.wires_layed)
+        Wire.current_wires += 1
+        self.name = 'W' + str(Wire.current_wires)
         self.coordinates = coordinates
         self.start = start
         self.end = end
@@ -334,8 +345,8 @@ class Wire:
         return conflicts
 
     def __del__(self):
-        Wire.wire_length = 0
-        Wire.wires_layed = 0
+        Wire.current_wires -= 1
+        print(self.name)
 
     def length(self):
         return len(self.coordinates)
@@ -359,6 +370,9 @@ class Gate:
 
     def num_wires(self):
         return len(self.wires)
+
+    def __del__(self):
+        Gate.num_gates -= 1
 
 
 # Calculate manhattan distance between two points
@@ -618,7 +632,7 @@ def print_stats(grid):
 
 
 #
-def mean_graph(netlist, repeats=100):
+def make_graph(netlist, repeats=10):
     plt.ion()
     fig = plt.figure()
 
@@ -635,9 +649,10 @@ def mean_graph(netlist, repeats=100):
             wires = eval("grid.init_wires(netlists.netlist_" + str(net) + ")")
             solve_conflicts_solo(grid, wires, fig)
 
-        grid.print_heatmap()
-        grid.print()
-        print_stats(grid)
+            grid.print_heatmap()
+            grid.print()
+            print_stats(grid)
+            del grid
 
-mean_graph([1])
+make_graph([1])
 
