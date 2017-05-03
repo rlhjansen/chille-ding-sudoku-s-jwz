@@ -2,6 +2,7 @@
 # speed and performance. Programs that import this class will gain access
 # to all these algorithms.
 import matplotlib.pyplot as plt
+import math
 from random import randint
 from random import seed
 import netlists
@@ -191,7 +192,6 @@ class Grid:
             print()
 
     def __del__(self):
-        print("YAY")
         for wire in self.wires:
             del wire
         for node in self.nodes:
@@ -201,6 +201,15 @@ class Grid:
 
     def size(self):
         return self.z_length, self.y_length, self.x_length
+
+    def wire_length(self):
+        length = 0
+
+        for wire in self.wires:
+            for _ in wire.coordinates:
+                length += 1
+
+        return length
 
 
 # These nodes are data points that store wires, gates and the heat.
@@ -308,7 +317,6 @@ class Node:
 class Wire:
     """class for all wires"""
     current_wires = 0
-    wire_length = 0
     wires_layed = 0
     heat = 1
 
@@ -320,11 +328,11 @@ class Wire:
         self.end = end
         self.heat = Wire.heat
         self.conflicts = 0
+        self.grid = grid
 
     def remove(self, grid):
         for coordinate in self.coordinates:
             grid.nodes[coordinate].remove(self)
-            Wire.wire_length -= 1
 
         self.coordinates = []
 
@@ -334,7 +342,6 @@ class Wire:
 
         for coordinate in self.coordinates:
             grid.nodes[coordinate].add(self)
-            Wire.wire_length += 1
 
         self.conflicts = Wire.num_conflicts(self, grid)
 
@@ -349,7 +356,6 @@ class Wire:
 
     def __del__(self):
         Wire.current_wires -= 1
-        print(self.name)
 
     def length(self):
         return len(self.coordinates)
@@ -587,7 +593,19 @@ def mutate_wires_hillclimber(grid, wires):
 
 
 #
-def solve_conflicts_solo(grid, wires, fig):
+def possibilities(length, num, tries):
+    nom = math.factorial(length) / math.factorial(num)
+    denom = math.factorial(length - num)
+    print(nom / denom)
+
+    if tries > nom / denom:
+        return False
+    else:
+        return True
+
+
+#
+def solve_conflicts_plot(grid, wires, fig):
     num_tries = 0
     conflicts = num_conflicts(grid)
     num_wires = 1
@@ -625,17 +643,48 @@ def solve_conflicts_solo(grid, wires, fig):
         fig.canvas.draw()
 
 
+# This method tries to solve as many conflicts in the grid as it can.
+def solve_conflicts(grid, wires):
+    num_tries = 0
+    conflicts = num_conflicts(grid)
+    num_wires = 1
+    line = []
+
+    while conflicts > 0:
+        wires_chosen = choose_wires(num_wires, wires)
+        mutate_wires_hillclimber(grid, wires_chosen)
+        new_conflicts = num_conflicts(grid)
+
+        if new_conflicts < conflicts:
+            conflicts = new_conflicts
+            num_tries = 0
+            num_wires = 1
+
+        num_tries += 1
+
+        if possibilities(len(wires), num_wires, num_tries):
+            num_tries = 0
+            num_wires += 1
+
+        line.append(conflicts)
+
+        if num_wires > 10:
+            return line
+
+    return line
+
+
 #
 def print_stats(grid):
     print("There were {} iterations."
           .format(Wire.wires_layed))
     print("The total length of the wires is {}."
-          .format(Wire.wire_length))
+          .format(grid.wire_length()))
     print("Conflicts left is:", num_conflicts(grid))
 
 
 #
-def make_graph(netlist, repeats=10):
+def make_graph(netlist, repeats=5):
     plt.ion()
     fig = plt.figure()
 
@@ -650,12 +699,60 @@ def make_graph(netlist, repeats=10):
 
             gates = grid.gates.values()
             wires = eval("grid.init_wires(netlists.netlist_" + str(net) + ")")
-            solve_conflicts_solo(grid, wires, fig)
+            solve_conflicts_plot(grid, wires, fig)
 
             grid.print_heatmap()
             grid.print()
             print_stats(grid)
             del grid
 
-make_graph([1])
+
+#
+def mean_line(lines):
+    mean = []
+
+    for line in lines:
+        for i in range(len(line)):
+            if len(mean) <= i:
+                mean.append(line[i])
+            else:
+                mean[i] += line[i]
+
+    num_lines = len(lines)
+
+    for i in range(len(mean)):
+        mean[i] = mean[i] / num_lines
+
+    return mean
+
+
+#
+def make_mean(netlist, repeats=10):
+    for net in netlist:
+        lines = []
+
+        for _ in range(repeats):
+            grid = [[[]]]
+
+            if net < 4:
+                grid = Grid("print_1")
+            elif net < 7:
+                grid = Grid("print_2")
+
+            gates = grid.gates.values()
+            wires = eval("grid.init_wires(netlists.netlist_" + str(net) + ")")
+            line = solve_conflicts(grid, wires)
+
+            lines.append(line)
+            print_stats(grid)
+            del grid
+
+        plt.plot(mean_line(lines))
+        plt.ylabel('conflicts')
+        plt.xlabel('iterations')
+        plt.show()
+
+
+make_mean([1], 10)
+# make_graph([1])
 
