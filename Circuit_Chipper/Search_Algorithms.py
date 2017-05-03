@@ -199,6 +199,9 @@ class Grid:
         for gate in self.gates:
             del gate
 
+    def size(self):
+        return self.z_length, self.y_length, self.x_length
+
 
 # These nodes are data points that store wires, gates and the heat.
 class Node:
