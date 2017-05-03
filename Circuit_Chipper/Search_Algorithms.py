@@ -596,12 +596,12 @@ def mutate_wires_hillclimber(grid, wires):
 def possibilities(length, num, tries):
     nom = math.factorial(length) / math.factorial(num)
     denom = math.factorial(length - num)
-    print(nom / denom)
+    possib = (nom / denom) * (nom / denom)
 
-    if tries > nom / denom:
-        return False
-    else:
+    if tries > possib:
         return True
+    else:
+        return False
 
 
 #
@@ -681,6 +681,7 @@ def print_stats(grid):
     print("The total length of the wires is {}."
           .format(grid.wire_length()))
     print("Conflicts left is:", num_conflicts(grid))
+    print()
 
 
 #
@@ -727,11 +728,25 @@ def mean_line(lines):
 
 
 #
+def mean_end(lines):
+    num_lines = len(lines)
+    mean = 0
+
+    for line in lines:
+        mean += len(line)
+
+    return int(mean / num_lines)
+
+
+#
 def make_mean(netlist, repeats=10):
     for net in netlist:
         lines = []
+        iterations = 0
+        conflicts = 0
 
-        for _ in range(repeats):
+        for repeat in range(repeats):
+            print("repeat number", repeat)
             grid = [[[]]]
 
             if net < 4:
@@ -744,15 +759,21 @@ def make_mean(netlist, repeats=10):
             line = solve_conflicts(grid, wires)
 
             lines.append(line)
+            iterations += Wire.wires_layed
+            conflicts += num_conflicts(grid)
             print_stats(grid)
             del grid
+
+        mean_iter = iterations / len(lines)
+        mean_con = conflicts / len(lines)
 
         plt.plot(mean_line(lines))
         plt.ylabel('conflicts')
         plt.xlabel('iterations')
         plt.show()
+        print("Completing took {} iterations on average." .format(mean_iter))
+        print("On average, {} conflicts were left." .format(mean_con))
 
 
 make_mean([1], 10)
 # make_graph([1])
-
