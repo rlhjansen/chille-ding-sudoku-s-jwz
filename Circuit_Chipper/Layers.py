@@ -17,6 +17,12 @@ class Grid:
         self.nodes = self.set_nodes(print_n)
         self.wires = self.set_wires(netlist)
 
+    def __del__(self):
+        for wire in self.wires:
+            del wire
+        for node in self.nodes:
+            del node
+
     def set_nodes(self, print_n):
         nodes = {}
 
@@ -57,7 +63,7 @@ class Grid:
             start_node = self.nodes[connection[0]]
             end_node = self.nodes[connection[1]]
 
-            wire = Wire(self, False, start_node, end_node)
+            wire = Wire(self, [], start_node, end_node)
             wires.append(wire)
             self.nodes[connection[0]].gets(wire)
             self.nodes[connection[1]].gets(wire)
@@ -89,26 +95,83 @@ class Wire:
         self.coordinates = coordinates
         self.start = start
         self.end = end
-        self.heat = Wire.heat
         self.grid = grid
-        self.manhat = self.manhattan()
 
     def __repr__(self):
         return self.name
 
-    def manhattan(self):
+    def __del__(self):
+        Wire.num -= 1
+        self.remove()
+
+    def lay(self, coordinates):
+        Wire.layed += 1
+        self.coordinates = coordinates
+        nodes = self.grid.nodes
+
+        for coordinate in coordinates:
+            nodes[coordinate].add(self)
+
+    def remove(self):
+        nodes = self.grid.nodes
+
+        for coordinate in self.coordinates:
+            nodes[coordinate].remove(self)
+
+    def man_dis(self, start=False, end=False):
+        if not start:
+            start = self.start.coordinate
+        if not end:
+            end = self.end.coordinate
         man_distance = 0
 
-        for i in range(len(self.start.coordinate)):
-            distance = self.start.coordinate[i] - self.end.coordinate[i]
+        for i in range(len(start)):
+            distance = start[i] - end[i]
             man_distance += abs(distance)
 
         return man_distance
 
+    def a_star(self, lay=False):
+        tries = 0
+        paths = [[self.man_dis(), self.start.coordinate]]
+
+        while paths and self.man_dis(start=paths[-1][-1]) > 1:
+            path = paths.pop()
+            tries += 1
+
+            for move in self.grid.nodes[path[-1]].neighbours(end=self.end, empty=True):
+                move = tuple(move.coordinate)
+                heuristik = len(path) + self.man_dis(start=move)
+                new_path = [heuristik] + path[1:] + [move]
+
+                if tries > 100 * self.man_dis(start=move):
+                    return []
+
+                index = 0
+                while index < len(paths) and paths[index][0] >= heuristik:
+                    index += 1
+                paths.insert(index, new_path)
+
+        if lay and paths:
+            self.lay(paths[-1][2:])
+
+        if paths:
+            return paths[-1][2:]
+        return []
+
+    def a_star_cost(self):
+        cost = len(self.start.neighbours(gates=True, end=self.end))\
+               + len(self.end.neighbours(gates=True, end=self.start))
+
+        for coordinate in self.a_star():
+            node = self.grid.nodes[coordinate]
+            cost += len(node.neighbours(gates=True))
+
+        return cost
+
 
 #
 class Node:
-
     def __init__(self, coordinate, grid):
         self.objects = []
         self.coordinate = coordinate
@@ -118,8 +181,37 @@ class Node:
     def __repr__(self):
         return 'Node ' + str(self.coordinate)
 
-    def add(self, object):
-        self.objects.append(object)
+    def add(self, obj):
+        self.objects.append(obj)
+
+    def remove(self, obj):
+        self.objects.remove(obj)
+
+    def neighbours(self, gates=False, end=False, empty=False):
+        position = self.coordinate
+        moves = ((position[0] + 1, position[1], position[2]),
+                 (position[0] - 1, position[1], position[2]),
+                 (position[0], position[1] + 1, position[2]),
+                 (position[0], position[1] - 1, position[2]),
+                 (position[0], position[1], position[2] + 1),
+                 (position[0], position[1], position[2] - 1),)
+        neighbour = []
+
+        for move in moves:
+            if move in self.grid.nodes:
+                node = self.grid.nodes[move]
+
+                if gates and type(node) == Gate:
+                    neighbour.append(node)
+                elif empty and not node.objects:
+                    neighbour.append(node)
+                elif not gates and not empty:
+                    neighbour.append(node)
+
+                if end and node == end:
+                    neighbour = neighbour[:-1]
+
+        return neighbour
 
 
 #
@@ -138,6 +230,9 @@ class Gate(Node):
     def __repr__(self):
         return self.name
 
+    def __del__(self):
+        Gate.num -= 1
+
     def gets(self, wire):
         self.busy.append(wire)
 
@@ -145,6 +240,16 @@ class Gate(Node):
         return len(self.busy)
 
 
+def a_star(wires):
+    if type(wires) == Wire:
+        wires = [wires]
+
+    for wire in wires:
+        print(wire)
+        wire.a_star(lay=True)
+
 
 chip = Grid('print_1', netlists.netlist_1)
+chip.wires.sort(key=lambda wire: (wire.a_star_cost(), wire.man_dis()))
+a_star(chip.wires)
 chip.print()
