@@ -48,17 +48,11 @@ def empty_neighbours(node, legal_node, grid):
 
 
 # Draw a conflicting wire with a free start and end.
-def connect_conflicting_wire(start_gate, end_gate, grid):
-    start_node = empty_neighbours(start_gate, end_gate, grid)
-    end_node = empty_neighbours(end_gate, start_gate, grid)
+def connect_conflicting_wire(start_node, end_node):
     pointer = start_node.coordinate
-    path = [pointer]
+    path = []
     start = start_node.coordinate
     end = end_node.coordinate
-
-    if pointer[0] == 0:
-        path.append((1, pointer[1], pointer[2]))
-    path.append((2, pointer[1], pointer[2]))
 
     x_moves = start[2] - end[2]
     if x_moves < 0:
@@ -84,9 +78,18 @@ def connect_conflicting_wire(start_gate, end_gate, grid):
 
         path.append(pointer)
 
-    path.append((1, end_node.coordinate[1], end_node.coordinate[2]))
-    if end[0] == 0:
-        path.append(end)
+    return path[:-1]
+
+
+#
+def draw_wire_piece(gate, end_gate, grid):
+    start_node = empty_neighbours(gate, end_gate, grid).coordinate
+    pointer = start_node
+    path = [start_node]
+
+    if pointer[0] == 0:
+        path.append((1, pointer[1], pointer[2]))
+    path.append((2, pointer[1], pointer[2]))
 
     return path
 
@@ -137,9 +140,12 @@ class Grid:
 
         for gate in gates:
             for wire in gate.wires:
-                if wire.coordinates == False:
-                    wire_path = connect_conflicting_wire(wire.start, wire.end, self)
-                    wire.lay(self, wire_path)
+                path = draw_wire_piece(gate, wire.other_gate(gate), self)
+                wire.lay(self, path)
+
+        for wire in self.wires:
+            wire_path = connect_conflicting_wire(wire.start, wire.end)
+            wire.lay(self, wire_path)
 
         return self.wires
 
@@ -224,7 +230,7 @@ class Node:
 
     def add(self, object):
         self.objects.append(object)
-        self.heat_point(object.heat)
+        self.add_heat(object.heat)
 
     def remove(self, object):
         self.objects.remove(object)
@@ -236,6 +242,8 @@ class Node:
         for object in self.objects:
             name += object.name + ' '
 
+        if name == '':
+            return '___'
         return name[:-1]
 
     def conflicts(self):
@@ -252,7 +260,7 @@ class Node:
 
         return False
 
-    def heat_point(self, radius):
+    def add_heat(self, radius):
         heat = radius
         last_nodes = [list(self.coordinate)]
         directions = [[1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]
@@ -327,8 +335,17 @@ class Wire:
         self.start = start
         self.end = end
         self.heat = Wire.heat
-        self.conflicts = 0
         self.grid = grid
+        self.manhat = self.manhattan()
+
+    def manhattan(self):
+        man_distance = 0
+
+        for i in range(len(self.start.coordinate)):
+            distance = self.start.coordinate[i] - self.end.coordinate[i]
+            man_distance += abs(distance)
+
+        return man_distance
 
     def remove(self, grid):
         for coordinate in self.coordinates:
@@ -336,14 +353,14 @@ class Wire:
 
         self.coordinates = []
 
-    def lay(self, grid, coordinate):
-        self.coordinates = coordinate
+    def lay(self, grid, coordinates):
+        if not self.coordinates:
+            self.coordinates = []
+        self.coordinates += coordinates
         Wire.wires_layed += 1
 
-        for coordinate in self.coordinates:
+        for coordinate in coordinates:
             grid.nodes[coordinate].add(self)
-
-        self.conflicts = Wire.num_conflicts(self, grid)
 
     def num_conflicts(self, grid):
         conflicts = 0
@@ -359,6 +376,14 @@ class Wire:
 
     def length(self):
         return len(self.coordinates)
+
+    def other_gate(self, gate):
+        if gate == self.start.objects[0]:
+            return self.end
+        return self.start
+
+    def __repr__(self):
+        return self.name
 
 
 class Gate:
@@ -382,6 +407,9 @@ class Gate:
 
     def __del__(self):
         Gate.num_gates -= 1
+
+    def __repr__(self):
+        return self.name
 
 
 # Calculate manhattan distance between two points
@@ -436,6 +464,45 @@ def legal_position(position, grid, end_coord):
     return True
 
 
+#
+def legal_position_size(position, grid, end_coord, wire):
+    position = tuple(position)
+
+    if position not in grid.nodes:
+        return False
+    elif not grid.nodes[position].valid(end_coord):
+
+        if grid.nodes[position].conflicts() > 0:
+            if position[0] == 0:
+                gates = grid.gates.values()
+                gate_coords = []
+
+                for gate in gates:
+                    gate_coords.append(gate.coordinate)
+
+                if (0, position[1] + 1, position[2]) in gate_coords:
+                    return False
+                elif (0, position[1] - 1, position[2]) in gate_coords:
+                    return False
+                elif (0, position[1], position[2] + 1) in gate_coords:
+                    return False
+                elif (0, position[1], position[2] - 1) in gate_coords:
+                    return False
+
+            elif position[0] == 1:
+                for gate in grid.gates.values():
+                    if gate.coordinate == (0, position[1], position[2]):
+                        return False
+
+        for object in grid.nodes[position].objects:
+            if type(object) == Gate:
+                return False
+            elif object.manhat < distance_heuristik(position, end_coord):
+                return False
+
+    return True
+
+
 # Returns the amount of overlapping wires/gates in the grid.
 def num_conflicts(grid):
     conflicts = 0
@@ -452,12 +519,11 @@ def stop(tries, heuristik, manhat_distance):
     if heuristik < 1:
         return False
     elif tries > float(1/heuristik) * manhat_distance * 100:
-        # print("stopped, heuristik = {} and tries is {}" .format(heuristik, tries))
         return True
     return False
 
 
-# Draw a wire from start to end with the A-star method.
+# Draw a wire from start to end with the heat heuristik.
 def connect_wire(start, end, grid):
     paths = [[distance_heuristik(start, end), start]]
     directions = ((0, 0, 1), (0, 0, -1), (0, 1, 0), (0, -1, 0), (1, 0, 0),
@@ -500,6 +566,48 @@ def connect_wire(start, end, grid):
 
 
 #
+def connect_wire_size(start, end, grid, wire):
+    paths = [[distance_heuristik(start, end), start]]
+    directions = ((0, 0, 1), (0, 0, -1), (0, 1, 0), (0, -1, 0), (1, 0, 0),
+                  (-1, 0, 0))
+    check = 0 # This is when A-star takes too long about 1 line
+
+    while paths[-1][-1] != end:
+        path = paths.pop()
+
+        for direction in directions:
+            pointer = list(path[-1])
+
+            for i in range(len(pointer)):
+                pointer[i] += direction[i]
+            pointer = tuple(pointer)
+
+            if (not legal_position_size(pointer, grid, end, wire)) or (pointer in path):
+                continue
+
+            heuristik = calculate_heuristik(path, pointer, end, grid)
+            new_path = [heuristik] + path[1:] + [pointer]
+
+            check += 1
+            if stop(check, heuristik, distance_heuristik(start, end)):
+                return False
+
+            index = 0
+            while index < len(paths) and paths[index][0] >= heuristik:
+                index += 1
+
+            if index == len(paths):
+                paths.append(new_path)
+            else:
+                paths.insert(index, new_path)
+
+        if len(paths) == 0:
+            return False
+
+    return paths[-1][2:-1]
+
+
+#
 def choose_wires(num, wires):
     index_chosen = []
 
@@ -515,6 +623,34 @@ def choose_wires(num, wires):
         wires_chosen.append(wires[index])
 
     return wires_chosen
+
+
+#
+def legal_wire(grid, wire):
+    for node in wire.coordinates:
+        if grid.nodes[node].conflicts() > 0:
+            if node[0] == 0:
+                gates = grid.gates.values()
+                gate_coords = []
+
+                for gate in gates:
+                    gate_coords.append(gate.coordinate)
+
+                if (0, node[1] + 1, node[2]) in gate_coords:
+                    return False
+                elif (0, node[1] - 1, node[2]) in gate_coords:
+                    return False
+                elif (0, node[1], node[2] + 1) in gate_coords:
+                    return False
+                elif (0, node[1], node[2] - 1) in gate_coords:
+                    return False
+
+            elif node[0] == 1:
+                for gate in grid.gates.values():
+                    if gate.coordinate == (0, node[1], node[2]):
+                        return False
+
+    return True
 
 
 # Won't make conflicts when laying wires.
@@ -578,13 +714,49 @@ def mutate_wires_hillclimber(grid, wires):
         else:
             wires[i].lay(grid, old_coordinates[i])
 
-    for i in range(len(wires)):
-        if wires[i].coordinates == []:
+    for wire in wires:
+        if wire.coordinates == []:
             continue
 
-        if grid.nodes[wires[i].coordinates[0]].conflicts() > 0 or grid.nodes[wires[i].coordinates[-1]].conflicts() > 0:
+        if not legal_wire(grid, wire):
+            for i in range(len(wires)):
+                wires[i].remove(grid)
+                wires[i].lay(grid, old_coordinates[i])
+
+    if num_conflicts(grid) > old_conflicts:
+        for i in range(len(wires)):
             wires[i].remove(grid)
             wires[i].lay(grid, old_coordinates[i])
+
+
+# Smaller wires may conflict with larger, but larger not with smaller ones.
+def mutate_wires_size(grid, wires):
+    old_coordinates = []
+    paths = []
+    old_conflicts = num_conflicts(grid)
+
+    for wire in wires:
+        old_coordinates.append(wire.coordinates)
+        wire.remove(grid)
+
+    for wire in wires:
+        path = connect_wire_size(wire.start.coordinate, wire.end.coordinate, grid, wire)
+        paths.append(path)
+
+    for i in range(len(wires)):
+        if paths[i] != False:
+            wires[i].lay(grid, paths[i])
+        else:
+            wires[i].lay(grid, old_coordinates[i])
+
+    for wire in wires:
+        if wire.coordinates == []:
+            continue
+
+        if not legal_wire(grid, wire):
+            for i in range(len(wires)):
+                wires[i].remove(grid)
+                wires[i].lay(grid, old_coordinates[i])
 
     if num_conflicts(grid) > old_conflicts:
         for i in range(len(wires)):
@@ -596,7 +768,7 @@ def mutate_wires_hillclimber(grid, wires):
 def possibilities(length, num, tries):
     nom = math.factorial(length) / math.factorial(num)
     denom = math.factorial(length - num)
-    possib = (nom / denom) * (nom / denom)
+    possib = nom / denom
 
     if tries > possib:
         return True
@@ -625,22 +797,37 @@ def solve_conflicts_plot(grid, wires, fig):
         if new_conflicts < conflicts:
             conflicts = new_conflicts
             num_tries = 0
+            num_wires = 1
+
+            # Drawing the graph
+            x.append(Wire.wires_layed)
+            y.append(conflicts)
+            line.set_xdata(x)
+            line.set_ydata(y)
+            line.axes.set_xlim(0, Wire.wires_layed + 20)
+            fig.canvas.draw()
 
         num_tries += 1
 
-        if num_tries > 1000 + num_wires * num_wires * 100:
+        if possibilities(len(wires), num_wires, num_tries):
             num_tries = 0
             num_wires += 1
 
-        if num_wires > 10:
-            break
-        x.append(Wire.wires_layed)
-        y.append(conflicts)
+            # Drawing the graph
+            x.append(Wire.wires_layed)
+            y.append(conflicts)
+            line.set_xdata(x)
+            line.set_ydata(y)
+            line.axes.set_xlim(0, Wire.wires_layed + 20)
+            point = fig.add_subplot(111)
+            point.plot(Wire.wires_layed, conflicts, 'b.')
+            fig.canvas.draw()
 
-        line.set_xdata(x)
-        line.set_ydata(y)
-        line.axes.set_xlim(0, Wire.wires_layed + 20)
-        fig.canvas.draw()
+            if Wire.wires_layed > 5000:
+                grid.print()
+
+        if num_wires > int(Wire.current_wires / 5):
+            break
 
 
 # This method tries to solve as many conflicts in the grid as it can.
@@ -739,7 +926,7 @@ def mean_end(lines):
 
 
 #
-def make_mean(netlist, repeats=10):
+def make_mean(netlist, repeats=20):
     for net in netlist:
         lines = []
         iterations = 0
@@ -775,5 +962,5 @@ def make_mean(netlist, repeats=10):
         print("On average, {} conflicts were left." .format(mean_con))
 
 
-make_mean([1], 10)
+make_mean([6])
 # make_graph([1])
