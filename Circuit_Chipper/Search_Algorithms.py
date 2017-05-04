@@ -9,6 +9,21 @@ import netlists
 
 
 #
+def get_middle(start, end):
+    if type(start) == Node or type(start) == Gate:
+        start = start.coordinate
+        end = end.coordinate
+
+    middle_coord = [0, 0, 0]
+
+    for i in start:
+        value = start[i] + end[i]
+        middle_coord[i] = int(value / 2)
+
+    return tuple(middle_coord)
+
+
+#
 def clean_ends(path, grid):
     if path[2:-1] == []:
         return True
@@ -35,10 +50,61 @@ def existing_position(position, grid):
 
 
 #
+def get_neighbours(start, end):
+    start = start.coordinate
+    end = end.coordinate
+
+    x = 0
+    y = 0
+
+    if start[2] - end[2] < 0:
+        x = 1
+    elif start[2] - end[2] > 0:
+        x = -1
+
+    if start[1] - end[1] < 0:
+        y = 1
+    elif start[1] - end[1] > 0:
+        y = -1
+
+    neighbours = []
+    while len(neighbours) < 4:
+
+        if x != 0 and x != 2:
+            neighbours.append((0, start[1], start[2] + x))
+
+            if y != 0 and y != 2:
+                neighbours.append((0, start[1] + y, start[2]))
+                neighbours.append((0, start[1] - y, start[2]))
+                y = 2
+            elif y == 0:
+                y = 1
+
+            neighbours.append((0, start[1], start[2] - x))
+            x = 2
+
+        elif x == 0:
+            x = 1
+
+            if y != 0 and y != 2:
+                neighbours.append((0, start[1] + y, start[2]))
+                neighbours.append((0, start[1] - y, start[2]))
+                y = 2
+            elif y == 0:
+                y = 1
+
+        elif x == 2:
+            if y == 0:
+                y = 1
+            neighbours.append((0, start[1] + y, start[2]))
+            neighbours.append((0, start[1] - y, start[2]))
+
+    return tuple(neighbours)
+
+
+#
 def empty_neighbours(node, legal_node, grid):
-    coord = node.coordinate
-    neighbours = ((0, coord[1], coord[2] + 1), (0, coord[1], coord[2] - 1),
-                  (0, coord[1] + 1, coord[2]), (0, coord[1] - 1, coord[2]))
+    neighbours = get_neighbours(node, legal_node)
 
     for neighbour in neighbours:
         if legal_position(neighbour, grid, legal_node.coordinate):
@@ -70,10 +136,10 @@ def connect_conflicting_wire(start_node, end_node):
 
     while x_moves != 0 or y_moves != 0:
         if y_moves == 0 or (x_moves != 0 and randint(0, 1) == 0):
-            pointer = (2, pointer[1], pointer[2] - x_direction)
+            pointer = (6, pointer[1], pointer[2] - x_direction)
             x_moves -= 1
         else:
-            pointer = (2, pointer[1] - y_direction, pointer[2])
+            pointer = (6, pointer[1] - y_direction, pointer[2])
             y_moves -= 1
 
         path.append(pointer)
@@ -89,7 +155,9 @@ def draw_wire_piece(gate, end_gate, grid):
 
     if pointer[0] == 0:
         path.append((1, pointer[1], pointer[2]))
-    path.append((2, pointer[1], pointer[2]))
+
+    for i in range(2, 7):
+        path.append((i, pointer[1], pointer[2]))
 
     return path
 
@@ -134,6 +202,22 @@ class Grid:
         file.close()
 
     def init_wires(self, netlist):
+        self.add_wires(netlist)
+        gates = self.gates.values()
+        gates = sorted(gates, key=lambda gate: gate.num_wires(), reverse=True)
+
+        for gate in gates:
+            for wire in gate.wires:
+                path = draw_wire_piece(gate, wire.other_gate(gate), self)
+                wire.lay(self, path)
+
+        for wire in self.wires:
+            wire_path = connect_conflicting_wire(wire.start, wire.end)
+            wire.lay(self, wire_path)
+
+        return self.wires
+
+    def init_wires_layer(self, netlist):
         self.add_wires(netlist)
         gates = self.gates.values()
         gates = sorted(gates, key=lambda gate: gate.num_wires(), reverse=True)
@@ -320,13 +404,16 @@ class Node:
             last_nodes = next_nodes
             heat -= 1
 
+    def __repr__(self):
+        return "Node: " + str(self.coordinate)
+
 
 # Stores the wire route, name, length and some helpful functions.
 class Wire:
     """class for all wires"""
     current_wires = 0
     wires_layed = 0
-    heat = 1
+    heat = 0
 
     def __init__(self, grid, coordinates, start, end):
         Wire.current_wires += 1
@@ -797,7 +884,9 @@ def solve_conflicts_plot(grid, wires, fig):
         if new_conflicts < conflicts:
             conflicts = new_conflicts
             num_tries = 0
-            num_wires = 1
+
+            if num_wires > 1:
+                num_wires -= 1
 
             # Drawing the graph
             x.append(Wire.wires_layed)
@@ -805,6 +894,8 @@ def solve_conflicts_plot(grid, wires, fig):
             line.set_xdata(x)
             line.set_ydata(y)
             line.axes.set_xlim(0, Wire.wires_layed + 20)
+            point = fig.add_subplot(111)
+            point.plot(Wire.wires_layed, conflicts, 'g.')
             fig.canvas.draw()
 
         num_tries += 1
@@ -887,6 +978,7 @@ def make_graph(netlist, repeats=5):
 
             gates = grid.gates.values()
             wires = eval("grid.init_wires(netlists.netlist_" + str(net) + ")")
+            grid.print()
             solve_conflicts_plot(grid, wires, fig)
 
             grid.print_heatmap()
@@ -962,5 +1054,5 @@ def make_mean(netlist, repeats=20):
         print("On average, {} conflicts were left." .format(mean_con))
 
 
-make_mean([6])
-# make_graph([1])
+# make_mean([6])
+make_graph([1, 2])
