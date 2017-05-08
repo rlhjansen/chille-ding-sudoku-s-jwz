@@ -1,5 +1,7 @@
-#
-#
+# This Algorithm calculates how "expensive" it is to lay a wire. Then it lays
+# wires from most expensive to least expensive. It does this by laying the wire
+# as close to the boundaries as possible.
+
 import matplotlib.pyplot as plt
 import math
 from random import randint
