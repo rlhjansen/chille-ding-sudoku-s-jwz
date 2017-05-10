@@ -149,7 +149,7 @@ class Wire:
                 heuristik = len(path) + self.man_dis(start=move)
                 new_path = [heuristik] + path[1:] + [move]
 
-                if tries > 1000 * self.man_dis(start=move):
+                if tries > 100000:
                     return []
 
                 index = 0
