@@ -150,7 +150,7 @@ class Wire:
                 heuristik = len(path) + self.man_dis(start=move)
                 new_path = [heuristik] + path[1:] + [move]
 
-                if tries > 1000 * self.man_dis(start=move):
+                if tries > 100000:
                     return []
 
                 index = 0
@@ -172,6 +172,9 @@ class Wire:
         for coordinate in self.a_star(base=True):
             node = self.grid.nodes[coordinate]
             cost += len(node.neighbours(gates=True))
+
+        if self.name == 'W40':
+            print(self.a_star(base=True))
 
         return cost
 
@@ -255,7 +258,7 @@ def a_star(wires):
         wire.a_star(lay=True)
 
 
-chip = Grid('print_2', netlists.netlist_4)
+chip = Grid('print_2', netlists.netlist_5)
 chip.wires.sort(key=lambda wire: (wire.a_star_cost(), wire.man_dis()))
 
 man = 0
