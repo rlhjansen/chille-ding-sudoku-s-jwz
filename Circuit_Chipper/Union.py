@@ -132,7 +132,7 @@ class Wire:
 
         return man_distance
 
-    def a_star(self, lay=False):
+    def a_star(self, lay=False, base=False):
         tries = 0
         paths = [[self.man_dis(), self.start.coordinate]]
 
@@ -142,10 +142,14 @@ class Wire:
 
             for move in self.grid.nodes[path[-1]].neighbours(end=self.end, empty=True):
                 move = tuple(move.coordinate)
+
+                if base and move[0] > 0:
+                    continue
+
                 heuristik = len(path) + self.man_dis(start=move)
                 new_path = [heuristik] + path[1:] + [move]
 
-                if tries > 100 * self.man_dis(start=move):
+                if tries > 1000 * self.man_dis(start=move):
                     return []
 
                 index = 0
@@ -164,7 +168,7 @@ class Wire:
         cost = len(self.start.neighbours(gates=True, end=self.end))\
                + len(self.end.neighbours(gates=True, end=self.start))
 
-        for coordinate in self.a_star():
+        for coordinate in self.a_star(base=True):
             node = self.grid.nodes[coordinate]
             cost += len(node.neighbours(gates=True))
 
