@@ -45,6 +45,8 @@ def draw(Dimensions):
                  round(cursor_pos[2] / 2.10176) * 2.10176)
     glCallList(4)
     glPopMatrix()
+    pygame.display.flip()
+
 
 
 # coordinates = [z,y,x]
@@ -73,30 +75,30 @@ def drawchip(coordinates):
     glVertex3f(0.5*x, 0.0, -0.5*z)
     glVertex3f(0.5*x, 0.0, 0.5*z)
     #BOTTOM
-    glVertex3f(0.5*x, -1.0, 0.5*z)
-    glVertex3f(0.5*x, -1.0, -0.5*z)
-    glVertex3f(-0.5*x, -1.0, -0.5*z)
-    glVertex3f(-0.5*x, -1.0, 0.5*z)
+    glVertex3f(0.5*(x+1), -1.0, 0.5*(z+1))
+    glVertex3f(0.5*(x+1), -1.0, -0.5*(z+1))
+    glVertex3f(-0.5*(x+1), -1.0, -0.5*(z+1))
+    glVertex3f(-0.5*(x+1), -1.0, 0.5*(z+1))
     #LEFT
-    glVertex3f(-0.5*x, 0.0, -0.5*z)
-    glVertex3f(-0.5*x, 0.0, 0.5*z)
-    glVertex3f(-0.5*x, -1.0, 0.5*z)
-    glVertex3f(-0.5*x, -1.0, -0.5*z)
+    glVertex3f(-0.5*(x+1), 0.0, -0.5*(z+1))
+    glVertex3f(-0.5*(x+1), 0.0, 0.5*(z+1))
+    glVertex3f(-0.5*(x+1), -1.0, 0.5*(z+1))
+    glVertex3f(-0.5*(x+1), -1.0, -0.5*(z+1))
     #RIGHT
-    glVertex3f(0.5*x, 0.0, -0.5*z)
-    glVertex3f(0.5*x, 0.0, 0.5*z)
-    glVertex3f(0.5*x, -1.0, 0.5*z)
-    glVertex3f(0.5*x, -1.0, -0.5*z)
+    glVertex3f(0.5*(x+1), 0.0, -0.5*(z+1))
+    glVertex3f(0.5*(x+1), 0.0, 0.5*(z+1))
+    glVertex3f(0.5*(x+1), -1.0, 0.5*(z+1))
+    glVertex3f(0.5*(x+1), -1.0, -0.5*(z+1))
     #BACK
-    glVertex3f(-0.5*x, 0.0, 0.5*z)
-    glVertex3f(0.5*x, 0.0, 0.5*z)
-    glVertex3f(0.5*x, -1.0, 0.5*z)
-    glVertex3f(-0.5*x, -1.0, 0.5*z)
+    glVertex3f(-0.5*(x+1), 0.0, 0.5*(z+1))
+    glVertex3f(0.5*(x+1), 0.0, 0.5*(z+1))
+    glVertex3f(0.5*(x+1), -1.0, 0.5*(z+1))
+    glVertex3f(-0.5*(x+1), -1.0, 0.5*(z+1))
     #FRONT
-    glVertex3f(-0.5 * x, 0.0, -0.5 * z)
-    glVertex3f(0.5 * x, 0.0, -0.5 * z)
-    glVertex3f(0.5 * x, -1.0, -0.5 * z)
-    glVertex3f(-0.5 * x, -1.0, -0.5 * z)
+    glVertex3f(-0.5 * (x+1), 0.0, -0.5 * (z+1))
+    glVertex3f(0.5 * (x+1), 0.0, -0.5 * (z+1))
+    glVertex3f(0.5 * (x+1), -1.0, -0.5 * (z+1))
+    glVertex3f(-0.5 * (x+1), -1.0, -0.5 * (z+1))
     glEnd();
 
 def get_input():
@@ -481,8 +483,8 @@ def GetPointsCorner(corner, size, dimensions):
     # right/top face options and left/bottom
     if (corner[3] == 'x-' and corner[4] == 'y+') or \
         (corner[3] == 'y-' and corner[4] == 'x+') or \
-        (corner[3] == 'x+' and corner[4] == 'z-') or \
-        (corner[3] == 'z+' and corner[4] == 'x-'):
+        (corner[3] == 'x+' and corner[4] == 'y-') or \
+        (corner[3] == 'y+' and corner[4] == 'x-'):
         return [[size + coordx, size + coordy, size + coordz],
                 [size + coordx, size + coordy, -1 * size + coordz],
                 [-1 * size + coordx, -1 * size + coordy, -1 * size + coordz],
@@ -542,7 +544,7 @@ def main(wireList, size, dimensions):
         completeWireList.append(newWire)
     TurnToObject(completeWireList)
     while True:
-        draw()
+        draw(dimensions)
         get_input()
 
 ########################################################3
