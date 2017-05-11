@@ -413,7 +413,7 @@ class Wire:
     """class for all wires"""
     current_wires = 0
     wires_layed = 0
-    heat = 0
+    heat = 1
 
     def __init__(self, grid, coordinates, start, end):
         Wire.current_wires += 1
@@ -1036,15 +1036,16 @@ def make_mean(netlist, repeats=20):
             gates = grid.gates.values()
             wires = eval("grid.init_wires(netlists.netlist_" + str(net) + ")")
             line = solve_conflicts(grid, wires)
-            templist = []
-            for wire in wires:
-                completewire = []
-                completewire.append(wire.start.coordinate)
-                for node in wire.coordinates:
-                    completewire.append(node)
-                completewire.append(wire.end.coordinate)
-                templist.append(completewire)
-            print(templist)
+            if False:
+                templist = []
+                for wire in wires:
+                    completewire = []
+                    completewire.append(wire.start.coordinate)
+                    for node in wire.coordinates:
+                        completewire.append(node)
+                    completewire.append(wire.end.coordinate)
+                    templist.append(completewire)
+                print(templist)
 
             lines.append(line)
             iterations += Wire.wires_layed
@@ -1062,4 +1063,6 @@ def make_mean(netlist, repeats=20):
         print("Completing took {} iterations on average." .format(mean_iter))
         print("On average, {} conflicts were left." .format(mean_con))
 
-make_mean([1],1)
+
+make_mean([2], repeats=1)
+# make_graph([2, 2, 2], repeats=1)
