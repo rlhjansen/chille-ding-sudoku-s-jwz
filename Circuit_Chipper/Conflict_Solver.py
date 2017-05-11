@@ -1036,6 +1036,15 @@ def make_mean(netlist, repeats=20):
             gates = grid.gates.values()
             wires = eval("grid.init_wires(netlists.netlist_" + str(net) + ")")
             line = solve_conflicts(grid, wires)
+            templist = []
+            for wire in wires:
+                completewire = []
+                completewire.append(wire.start.coordinate)
+                for node in wire.coordinates:
+                    completewire.append(node)
+                completewire.append(wire.end.coordinate)
+                templist.append(completewire)
+            print(templist)
 
             lines.append(line)
             iterations += Wire.wires_layed
@@ -1053,6 +1062,4 @@ def make_mean(netlist, repeats=20):
         print("Completing took {} iterations on average." .format(mean_iter))
         print("On average, {} conflicts were left." .format(mean_con))
 
-
-# make_mean([6])
-make_graph([1, 2])
+make_mean([1],1)
