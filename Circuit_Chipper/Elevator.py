@@ -37,7 +37,7 @@ class Grid:
             line = line.split()
             self.x = int(line[0])
             self.y = int(line[1])
-            self.z = int(line[2]) + 10
+            self.z = int(line[2]) + 1
 
             for z in range(self.z):
                 for y in range(self.y):
@@ -365,9 +365,30 @@ def elevator(grid):
             can_lay.append((wire, start_end[0], start_end[1]))
 
 
-chip = Grid('print_1', netlists.netlist_1)
+#
+def total_manhat(wires):
+    length = 0
+
+    for wire in wires:
+        length += wire.man_dis()
+
+    return length
+
+
+#
+def total_length(wires):
+    length = 0
+
+    for wire in wires:
+        length += len(wire.coordinates)
+
+    return length
+
+
+chip = Grid('print_2', netlists.netlist_6)
 chip.wires.sort(key=lambda wire: (wire.a_star_cost(y=False), wire.man_dis()), reverse=True)
 elevator(chip)
 
 chip.print()
-
+print('manhat', total_manhat(chip.wires))
+print('length', total_length(chip.wires))
