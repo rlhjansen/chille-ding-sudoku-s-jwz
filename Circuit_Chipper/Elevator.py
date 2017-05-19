@@ -3,6 +3,8 @@
 #
 
 import netlists
+import queue as Q
+
 
 class Grid:
     def __init__(self, print_n, netlist):
@@ -12,6 +14,11 @@ class Grid:
 
         self.nodes = self.set_nodes(print_n)
         self.wires = self.set_wires(netlist)
+        self.gates = []
+
+        for i in range(Gate.num):
+            self.gates.append(self.nodes[i + 1])
+        self.reserve_gates()
 
     def __del__(self):
         for wire in self.wires:
@@ -28,7 +35,7 @@ class Grid:
             line = line.split()
             self.x = int(line[0])
             self.y = int(line[1])
-            self.z = int(line[2])
+            self.z = int(line[2]) + 10
 
             for z in range(self.z):
                 for y in range(self.y):
@@ -63,9 +70,16 @@ class Grid:
             wires.append(wire)
             self.nodes[connection[0]].gets(wire)
             self.nodes[connection[1]].gets(wire)
+
         return wires
 
-    def print(self, layer=False):
+    def reserve_gates(self):
+        gates = sorted(self.gates, key=lambda gate: gate.busyness(), reverse=True)
+        for gate in gates:
+            for wire in gate.busy:
+                lift(wire, 0)
+
+    def print(self, z_layer=False):
         print_grid = [[[self.nodes[(z, y, x)].objects
                         for x in range(self.x)]
                        for y in range(self.y)]
@@ -73,8 +87,8 @@ class Grid:
 
         print()
         print("This is a grid")
-        if layer:
-            for row in print_grid[layer]:
+        if type(z_layer) == int:
+            for row in print_grid[z_layer]:
                 print(row)
             print()
         else:
@@ -142,51 +156,52 @@ class Wire:
 
         return man_distance
 
-    def a_star(self, lay=False, y=True, start=False, end=False):
+    def a_star(self, lay=False, y=False, start=False, end=False):
         if type(end) == tuple:
             end = self.grid.nodes[end]
         elif not end:
             end = self.end
         if type(start) == tuple:
             start = self.grid.nodes[start]
-        if not start:
+        elif not start:
             start = self.start
 
-        paths = [[self.man_dis(), start.coordinate]]
+        paths = Q.PriorityQueue()
+        paths.put([self.man_dis(), start.coordinate])
+        nodes_visited = {start.coordinate}
+        path = [self.man_dis(), start.coordinate]
 
-        while paths and self.man_dis(start=paths[-1][-1], end=end) > 1:
-            path = paths.pop()
+        while not paths.empty() and path[-1] != end.coordinate:
+            path = paths.get()
 
             for move in self.grid.nodes[path[-1]].neighbours(end=end, empty=True, wire=self):
                 move = tuple(move.coordinate)
 
-                if ((not y) and move[0] != 0) or move in path:
+                if (type(y) == int and move[0] > y) or move in nodes_visited:
                     continue
-
-                for other_path in paths:
-                    if move in other_path:
-                        continue
 
                 heuristik = len(path) + self.man_dis(start=move, end=end)
                 new_path = [heuristik] + path[1:] + [move]
+                nodes_visited.add(move)
 
-                index = 0
-                while index < len(paths) and paths[index][0] >= heuristik:
-                    index += 1
-                paths.insert(index, new_path)
+                paths.put(new_path)
 
-        if lay and paths:
-            self.lay(paths[-1][2:])
+        if paths.empty():
+            return False
 
-        if paths:
-            return paths[-1][2:]
-        return False
+        if lay:
+            self.lay(path[2:-1])
+        return path[2:-1]
 
-    def a_star_cost(self, y=True, length=True):
+    def a_star_cost(self, y=False, length=True, start=False, end=False):
         cost = len(self.start.neighbours(gates=True, end=self.end))\
                + len(self.end.neighbours(gates=True, end=self.start))
 
-        for coordinate in self.a_star(y=y):
+        path = self.a_star(y=y, start=start, end=end)
+        if not path:
+            return 1000
+
+        for coordinate in path:
             node = self.grid.nodes[coordinate]
             cost += len(node.neighbours(gates=True))
             if length:
@@ -278,10 +293,11 @@ class Gate(Node):
 
 #
 def wires_to_lay(layed_wires, grid):
-    to_lay = grid.wires
+    to_lay = []
 
-    for wire in layed_wires:
-        to_lay.remove(wire)
+    for wire in grid.wires:
+        if not (wire in layed_wires):
+            to_lay.append(wire)
 
     return to_lay
 
@@ -293,15 +309,13 @@ def lift(wire, height):
     start_end = []
 
     for gate in [wire.start, wire.end]:
-        start_node = gate.neighbours(empty=True)
-        pointer = start_node
-        path = [start_node]
+        start_nodes = gate.neighbours(empty=True)
+        pointer = start_nodes[0].coordinate
+        path = [pointer]
 
-        if pointer[0] == 0:
-            path.append((1, pointer[1], pointer[2]))
-
-        for i in range(2, height):
-            path.append((i, pointer[1], pointer[2]))
+        for i in range(0, height):
+            if path[0][0] != i + 1:
+                path.append((i + 1, pointer[1], pointer[2]))
 
         start_end.append(path[-1])
         total_path += path
@@ -316,28 +330,31 @@ def elevator(grid):
     layed = []
     can_lay = []
     for wire in wires_to_lay(layed, grid):
-        can_lay.append((wire, wire.start, wire.end))
+        wire.remove()
+        start_end = lift(wire, height)
+        can_lay.append((wire, start_end[0], start_end[1]))
 
-    while len(layed) < len(grid.wires) and height < grid.z:
+    while len(layed) < len(grid.wires) and height < grid.z - 1:
         while can_lay:
-            can_lay.sort(key=lambda wire_set: (wire_set[0].a_star_cost(y=False), wire_set[0].man_dis()), reverse=True)
+            can_lay.sort(key=lambda wire_set: (wire_set[0].a_star_cost(y=height, start=wire_set[1], end=wire_set[2]), wire_set[0].man_dis()), reverse=True)
             wire_set = can_lay.pop()
             wire = wire_set[0]
-            path = wire.a_star(y=False, start=wire_set[1], end=wire_set[2])
+            path = wire.a_star(y=height, start=wire_set[1], end=wire_set[2])
 
             if path != False:
                 wire.lay(path)
                 layed.append(wire)
 
-        print(height)
-        grid.print(layer=height)
+        print(height, len(layed))
+        grid.print(z_layer=height)
 
         height += 1
         for wire in wires_to_lay(layed, grid):
+            wire.remove()
             start_end = lift(wire, height)
             can_lay.append((wire, start_end[0], start_end[1]))
 
 
-chip = Grid('print_1', netlists.netlist_1)
+chip = Grid('print_2', netlists.netlist_5)
 chip.wires.sort(key=lambda wire: (wire.a_star_cost(y=False), wire.man_dis()), reverse=True)
 elevator(chip)
