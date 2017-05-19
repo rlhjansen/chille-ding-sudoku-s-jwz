@@ -347,7 +347,7 @@ def elevator(grid):
             wire = wire_set[0]
             old_path = wire.coordinates
             wire.remove()
-            path = wire.a_star(y=height)
+            path = wire.a_star(y=height, start=wire_set[1], end=wire_set[2])
 
             if path != False:
                 wire.lay(path)
@@ -365,9 +365,6 @@ def elevator(grid):
             can_lay.append((wire, start_end[0], start_end[1]))
 
 
-chip = Grid('print_1', netlists.netlist_1)
+chip = Grid('print_2', netlists.netlist_6)
 chip.wires.sort(key=lambda wire: (wire.a_star_cost(y=False), wire.man_dis()), reverse=True)
 elevator(chip)
-
-chip.print()
-
