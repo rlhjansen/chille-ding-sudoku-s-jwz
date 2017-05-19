@@ -328,15 +328,18 @@ def lift(wire, height, init=False):
 
 #
 def elevator(grid, show=False):
-    height = 0
+    height = -1
     layed = []
     can_lay = []
-    for wire in wires_to_lay(layed, grid):
-        wire.remove()
-        start_end = lift(wire, height)
-        can_lay.append((wire, start_end[0], start_end[1]))
 
     while len(layed) < len(grid.wires) and height < grid.z - 1:
+        height += 1
+
+        for wire in wires_to_lay(layed, grid):
+            wire.remove()
+            start_end = lift(wire, height)
+            can_lay.append((wire, start_end[0], start_end[1]))
+
         while can_lay:
             can_lay.sort(key=lambda wire_set: (wire_set[0].a_star_cost(y=height, start=wire_set[1], end=wire_set[2]), wire_set[0].man_dis()), reverse=True)
             wire_set = can_lay.pop()
@@ -354,12 +357,6 @@ def elevator(grid, show=False):
         if show:
             print(height, len(layed))
             grid.print(z_layer=height)
-
-        height += 1
-        for wire in wires_to_lay(layed, grid):
-            wire.remove()
-            start_end = lift(wire, height)
-            can_lay.append((wire, start_end[0], start_end[1]))
 
     return height + 1
 
@@ -413,7 +410,7 @@ def elevator_all():
 elevator_all()
 
 if False:
-    chip = Grid('print_1', netlists.netlist_3)
+    chip = Grid('print_2', netlists.netlist_6)
     chip.wires.sort(key=lambda wire: (wire.a_star_cost(y=False), wire.man_dis()), reverse=True)
 
     print('layers', elevator(chip, show=True))
