@@ -4,6 +4,8 @@
 
 import netlists
 import queue as Q
+import random
+from random import shuffle
 
 
 class Grid:
@@ -75,6 +77,7 @@ class Grid:
 
     def reserve_gates(self):
         gates = sorted(self.gates, key=lambda gate: gate.busyness(), reverse=True)
+
         for gate in gates:
             for wire in gate.busy:
                 lift(wire, 0)
@@ -227,7 +230,7 @@ class Node:
     def remove(self, obj):
         self.objects.remove(obj)
 
-    def neighbours(self, gates=False, end=False, empty=False, wire=False, wires=False):
+    def neighbours(self, gates=False, end=False, empty=False, wire=False, wires=False, init=False):
         if type(end) == tuple:
             end = self.grid.nodes[end]
 
@@ -262,6 +265,9 @@ class Node:
                 elif empty and wire and node.objects == [wire]:
                     neighbour.append(node)
 
+        if empty and init:
+            neighbour.sort(key=lambda coord: len(coord.neighbours(gates=True)))
+
         return neighbour
 
 
@@ -288,7 +294,7 @@ class Gate(Node):
         self.busy.append(wire)
 
     def busyness(self):
-        return len(self.busy)
+        return len(self.busy) + len(self.neighbours(gates=True))
 
 
 #
@@ -303,13 +309,13 @@ def wires_to_lay(layed_wires, grid):
 
 
 #
-def lift(wire, height):
+def lift(wire, height, init=False):
     wire.remove()
     total_path = []
     start_end = []
 
     for gate in [wire.start, wire.end]:
-        start_nodes = gate.neighbours(empty=True)
+        start_nodes = gate.neighbours(empty=True, init=init)
         pointer = start_nodes[0].coordinate
         path = [pointer]
 
@@ -355,6 +361,6 @@ def elevator(grid):
             can_lay.append((wire, start_end[0], start_end[1]))
 
 
-chip = Grid('print_2', netlists.netlist_5)
+chip = Grid('print_2', netlists.netlist_6)
 chip.wires.sort(key=lambda wire: (wire.a_star_cost(y=False), wire.man_dis()), reverse=True)
 elevator(chip)
