@@ -22,42 +22,42 @@ class Grid:
             self.gates.append(self.nodes[i + 1])
         self.reserve_gates()
 
-    def __del__(self):
-        for wire in self.wires:
-            del wire
-        for node in self.nodes:
-            del node
+    def reset(self):
+        Wire.num = 0
+        Wire.layed = 0
+        Gate.num = 0
 
     def set_nodes(self, print_n):
         nodes = {}
 
-        with open(print_n) as file:
+        file = open(print_n)
+        file.seek(0, 0)
+        line = file.readline()
+
+        line = line.split()
+        self.x = int(line[0])
+        self.y = int(line[1])
+        self.z = int(line[2])
+
+        for z in range(self.z):
+            for y in range(self.y):
+                for x in range(self.x):
+                    nodes[(z, y, x)] = Node((z, y, x), self)
+
+        # Set all gates in the correct nodes.
+        line = file.readline()
+        Gate.num_gates = 0
+        while line:
+            line = line.replace("(", "").replace(")", "").replace(",", "")
+            line = line.split(" ")
+
+            coordinate = (int(line[3]), int(line[2]), int(line[1]))
+            del nodes[coordinate]
+            gate = Gate(coordinate, self)
+            nodes[coordinate] = gate
+            nodes[gate.num] = gate
+
             line = file.readline()
-
-            line = line.split()
-            self.x = int(line[0])
-            self.y = int(line[1])
-            self.z = int(line[2]) + 1
-
-            for z in range(self.z):
-                for y in range(self.y):
-                    for x in range(self.x):
-                        nodes[(z, y, x)] = Node((z, y, x), self)
-
-            # Set all gates in the correct nodes.
-            line = file.readline()
-            Gate.num_gates = 0
-            while line:
-                line = line.replace("(", "").replace(")", "").replace(",", "")
-                line = line.split(" ")
-
-                coordinate = (int(line[3]), int(line[2]), int(line[1]))
-                del nodes[coordinate]
-                gate = Gate(coordinate, self)
-                nodes[coordinate] = gate
-                nodes[gate.num] = gate
-
-                line = file.readline()
 
         file.close()
         return nodes
@@ -65,6 +65,9 @@ class Grid:
     def set_wires(self, netlist):
         wires = []
         for connection in netlist:
+            if connection[0] not in self.nodes:
+                continue
+
             start_node = self.nodes[connection[0]]
             end_node = self.nodes[connection[1]]
 
@@ -80,7 +83,7 @@ class Grid:
 
         for gate in gates:
             for wire in gate.busy:
-                lift(wire, 0)
+                lift(wire, 0, init=True)
 
     def print(self, z_layer=False):
         print_grid = [[[self.nodes[(z, y, x)].objects
@@ -117,10 +120,6 @@ class Wire:
 
     def __repr__(self):
         return self.name
-
-    def __del__(self):
-        Wire.num -= 1
-        self.remove()
 
     def lay(self, coordinates):
         Wire.layed += 1
@@ -287,9 +286,6 @@ class Gate(Node):
     def __repr__(self):
         return self.name
 
-    def __del__(self):
-        Gate.num -= 1
-
     def gets(self, wire):
         self.busy.append(wire)
 
@@ -331,7 +327,7 @@ def lift(wire, height, init=False):
 
 
 #
-def elevator(grid):
+def elevator(grid, show=False):
     height = 0
     layed = []
     can_lay = []
@@ -355,14 +351,17 @@ def elevator(grid):
             else:
                 wire.lay(old_path)
 
-        print(height, len(layed))
-        grid.print(z_layer=height)
+        if show:
+            print(height, len(layed))
+            grid.print(z_layer=height)
 
         height += 1
         for wire in wires_to_lay(layed, grid):
             wire.remove()
             start_end = lift(wire, height)
             can_lay.append((wire, start_end[0], start_end[1]))
+
+    return height + 1
 
 
 #
@@ -385,10 +384,38 @@ def total_length(wires):
     return length
 
 
-chip = Grid('print_2', netlists.netlist_6)
-chip.wires.sort(key=lambda wire: (wire.a_star_cost(y=False), wire.man_dis()), reverse=True)
-elevator(chip)
+#
+def elevator_all():
+    for i in range(1, 7):
+        p = ''
 
-chip.print()
-print('manhat', total_manhat(chip.wires))
-print('length', total_length(chip.wires))
+        if i < 4:
+            p = 'print_1'
+        else:
+            p = 'print_2'
+
+        print('netlist', i)
+
+        grid = eval("Grid(\'" + p + "\', netlists.netlist_" + str(i) + ")")
+        grid.wires.sort(
+            key=lambda wire: (wire.a_star_cost(y=False), wire.man_dis()),
+            reverse=True)
+
+        print('Height =', elevator(grid))
+        print('minimal length =', total_manhat(grid.wires))
+        print('result length =', total_length(grid.wires))
+        print()
+
+        grid.reset()
+        del grid
+
+
+elevator_all()
+
+if False:
+    chip = Grid('print_1', netlists.netlist_3)
+    chip.wires.sort(key=lambda wire: (wire.a_star_cost(y=False), wire.man_dis()), reverse=True)
+
+    print('layers', elevator(chip, show=True))
+    print('manhat', total_manhat(chip.wires))
+    print('length', total_length(chip.wires))
