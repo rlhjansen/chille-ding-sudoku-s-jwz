@@ -158,7 +158,7 @@ class Wire:
 
         return man_distance
 
-    def a_star(self, lay=False, y=False, start=False, end=False):
+    def a_star(self, lay=False, y=False, start=False, end=False, turn=False):
         if type(end) == tuple:
             end = self.grid.nodes[end]
         elif not end:
@@ -183,6 +183,9 @@ class Wire:
                     continue
 
                 heuristik = len(path) + self.man_dis(start=move, end=end)
+                if turn:
+                    heuristik += turn_penalty(path, move)
+
                 new_path = [heuristik] + path[1:] + [move]
                 nodes_visited.add(move)
 
@@ -302,6 +305,34 @@ def wires_to_lay(layed_wires, grid):
             to_lay.append(wire)
 
     return to_lay
+
+
+#
+def turn_penalty(coordinates, pointer, kost=2):
+    if len(coordinates) < 4:
+        return 0
+    coor_1 = coordinates[-2]
+    coor_2 = coordinates[-1]
+
+    prev_direction = None
+    if coor_1[0] != coor_2[0]:
+        prev_direction = 'z'
+    elif coor_1[1] != coor_2[1]:
+        prev_direction = 'y'
+    elif coor_1[2] != coor_2[2]:
+        prev_direction = 'x'
+
+    next_direction = None
+    if pointer[0] != coor_1[0]:
+        next_direction = 'z'
+    elif pointer[1] != coor_1[1]:
+        next_direction = 'y'
+    elif pointer[2] != coor_1[2]:
+        next_direction = 'x'
+
+    if prev_direction != next_direction:
+        return kost
+    return 0
 
 
 #
