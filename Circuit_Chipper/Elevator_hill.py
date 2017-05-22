@@ -4,8 +4,8 @@
 
 import netlists
 import queue as Q
-import random
 from random import shuffle
+from random import randint
 
 
 class Grid:
@@ -22,42 +22,45 @@ class Grid:
             self.gates.append(self.nodes[i + 1])
         self.reserve_gates()
 
-    def __del__(self):
+    def reset(self):
+        Wire.num = 0
+        Wire.layed = 0
+        Gate.num = 0
+
         for wire in self.wires:
-            del wire
-        for node in self.nodes:
-            del node
+            wire.remove()
 
     def set_nodes(self, print_n):
         nodes = {}
 
-        with open(print_n) as file:
+        file = open(print_n)
+        file.seek(0, 0)
+        line = file.readline()
+
+        line = line.split()
+        self.x = int(line[0])
+        self.y = int(line[1])
+        self.z = int(line[2]) + 10
+
+        for z in range(self.z):
+            for y in range(self.y):
+                for x in range(self.x):
+                    nodes[(z, y, x)] = Node((z, y, x), self)
+
+        # Set all gates in the correct nodes.
+        line = file.readline()
+        Gate.num_gates = 0
+        while line:
+            line = line.replace("(", "").replace(")", "").replace(",", "")
+            line = line.split(" ")
+
+            coordinate = (int(line[3]), int(line[2]), int(line[1]))
+            del nodes[coordinate]
+            gate = Gate(coordinate, self)
+            nodes[coordinate] = gate
+            nodes[gate.num] = gate
+
             line = file.readline()
-
-            line = line.split()
-            self.x = int(line[0])
-            self.y = int(line[1])
-            self.z = int(line[2]) + 10
-
-            for z in range(self.z):
-                for y in range(self.y):
-                    for x in range(self.x):
-                        nodes[(z, y, x)] = Node((z, y, x), self)
-
-            # Set all gates in the correct nodes.
-            line = file.readline()
-            Gate.num_gates = 0
-            while line:
-                line = line.replace("(", "").replace(")", "").replace(",", "")
-                line = line.split(" ")
-
-                coordinate = (int(line[3]), int(line[2]), int(line[1]))
-                del nodes[coordinate]
-                gate = Gate(coordinate, self)
-                nodes[coordinate] = gate
-                nodes[gate.num] = gate
-
-                line = file.readline()
 
         file.close()
         return nodes
@@ -65,6 +68,9 @@ class Grid:
     def set_wires(self, netlist):
         wires = []
         for connection in netlist:
+            if connection[0] not in self.nodes:
+                continue
+
             start_node = self.nodes[connection[0]]
             end_node = self.nodes[connection[1]]
 
@@ -80,7 +86,7 @@ class Grid:
 
         for gate in gates:
             for wire in gate.busy:
-                lift(wire, 0)
+                lift(wire, 0, init=True)
 
     def print(self, z_layer=False):
         print_grid = [[[self.nodes[(z, y, x)].objects
@@ -117,10 +123,6 @@ class Wire:
 
     def __repr__(self):
         return self.name
-
-    def __del__(self):
-        Wire.num -= 1
-        self.remove()
 
     def lay(self, coordinates):
         Wire.layed += 1
@@ -159,7 +161,7 @@ class Wire:
 
         return man_distance
 
-    def a_star(self, lay=False, y=False, start=False, end=False):
+    def a_star(self, lay=False, y=False, start=False, end=False, turn=False):
         if type(end) == tuple:
             end = self.grid.nodes[end]
         elif not end:
@@ -184,6 +186,9 @@ class Wire:
                     continue
 
                 heuristik = len(path) + self.man_dis(start=move, end=end)
+                if turn:
+                    heuristik += turn_penalty(path, move)
+
                 new_path = [heuristik] + path[1:] + [move]
                 nodes_visited.add(move)
 
@@ -287,9 +292,6 @@ class Gate(Node):
     def __repr__(self):
         return self.name
 
-    def __del__(self):
-        Gate.num -= 1
-
     def gets(self, wire):
         self.busy.append(wire)
 
@@ -306,6 +308,34 @@ def wires_to_lay(layed_wires, grid):
             to_lay.append(wire)
 
     return to_lay
+
+
+#
+def turn_penalty(coordinates, pointer, kost=2):
+    if len(coordinates) < 4:
+        return 0
+    coor_1 = coordinates[-2]
+    coor_2 = coordinates[-1]
+
+    prev_direction = None
+    if coor_1[0] != coor_2[0]:
+        prev_direction = 'z'
+    elif coor_1[1] != coor_2[1]:
+        prev_direction = 'y'
+    elif coor_1[2] != coor_2[2]:
+        prev_direction = 'x'
+
+    next_direction = None
+    if pointer[0] != coor_1[0]:
+        next_direction = 'z'
+    elif pointer[1] != coor_1[1]:
+        next_direction = 'y'
+    elif pointer[2] != coor_1[2]:
+        next_direction = 'x'
+
+    if prev_direction != next_direction:
+        return kost
+    return 0
 
 
 #
@@ -331,23 +361,25 @@ def lift(wire, height, init=False):
 
 
 #
-def elevator(grid):
-    height = 0
+def elevator(grid, show=False):
+    height = -1
     layed = []
     can_lay = []
-    for wire in wires_to_lay(layed, grid):
-        wire.remove()
-        start_end = lift(wire, height)
-        can_lay.append((wire, start_end[0], start_end[1]))
 
     while len(layed) < len(grid.wires) and height < grid.z - 1:
+        height += 1
+
+        for wire in wires_to_lay(layed, grid):
+            wire.remove()
+            start_end = lift(wire, height)
+            can_lay.append((wire, start_end[0], start_end[1]))
+
         while can_lay:
-            can_lay.sort(key=lambda wire_set: (wire_set[0].a_star_cost(y=height, start=wire_set[1], end=wire_set[2]), wire_set[0].man_dis()), reverse=True)
             wire_set = can_lay.pop()
             wire = wire_set[0]
             old_path = wire.coordinates
             wire.remove()
-            path = wire.a_star(y=height, start=wire_set[1], end=wire_set[2])
+            path = wire.a_star(y=height)
 
             if path != False:
                 wire.lay(path)
@@ -355,16 +387,111 @@ def elevator(grid):
             else:
                 wire.lay(old_path)
 
-        print(height, len(layed))
-        grid.print(z_layer=height)
+        if show:
+            print(height, len(layed))
+            grid.print(z_layer=height)
 
-        height += 1
-        for wire in wires_to_lay(layed, grid):
-            wire.remove()
-            start_end = lift(wire, height)
-            can_lay.append((wire, start_end[0], start_end[1]))
+    return height + 1
 
 
-chip = Grid('print_2', netlists.netlist_6)
-chip.wires.sort(key=lambda wire: (wire.a_star_cost(y=False), wire.man_dis()), reverse=True)
-elevator(chip)
+#
+def total_manhat(wires):
+    length = 0
+
+    for wire in wires:
+        length += wire.man_dis()
+
+    return length
+
+
+#
+def total_length(wires):
+    length = 0
+
+    for wire in wires:
+        length += len(wire.coordinates)
+
+    return length
+
+
+#
+def mutate_order(order):
+    i_1 = randint(0, len(order) - 1)
+    i_2 = randint(0, len(order) - 1)
+    wire_1 = order[i_1]
+    wire_2 = order[i_2]
+
+    mut_order = []
+    index = 0
+    while index < len(order):
+        if index == i_1:
+            mut_order.append(wire_2)
+        elif index == i_2:
+            mut_order.append(wire_1)
+        else:
+            mut_order.append(order[index])
+
+        index += 1
+
+    return mut_order
+
+
+#
+def hill_climber(net, repeats):
+    print('netlist', net)
+    p = ''
+
+    if net < 4:
+        p = 'print_1'
+    else:
+        p = 'print_2'
+
+    grid = eval("Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
+    shuffle(grid.wires)
+
+    best_order = []
+    for wire in grid.wires:
+        best_order.append(wire)
+
+    best_height = elevator(grid)
+    best_length = total_length(grid.wires)
+
+    print('Order 1 =', best_order)
+    print('Height =', best_height)
+    print('length =', best_length)
+    print()
+    grid.reset()
+
+    for rep in range(repeats - 1):
+        grid.reserve_gates()
+        new_order = mutate_order(best_order)
+        grid.wires = new_order
+        new_height = elevator(grid)
+        new_length = total_length(grid.wires)
+
+        print('Order', str(rep), '=', new_order)
+        print('Height =', new_height)
+        print('Length =', new_length)
+
+        if new_height < 9 and new_length <= best_length:
+            best_order = new_order
+            best_height = new_height
+            best_length = new_length
+            print('shorter length!')
+        elif best_height >= 9 and new_height <= best_height:
+            best_order = new_order
+            best_height = new_height
+            best_length = new_length
+            print('lower height!')
+
+        print()
+        grid.reset()
+
+    print('Best Order =', best_order)
+    print('Best Height =', best_height)
+    print('Best Length =', best_length)
+    print('Min Length =', total_manhat(best_order))
+    print()
+
+
+hill_climber(1, 20)
