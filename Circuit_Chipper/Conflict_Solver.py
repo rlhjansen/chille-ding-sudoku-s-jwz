@@ -1046,6 +1046,11 @@ def make_mean(netlist, repeats=20):
                     completewire.append(wire.end.coordinate)
                     templist.append(completewire)
                 print(templist)
+            if True:
+                templist = []
+                for gate in gates:
+                    templist.append(gate.coordinate)
+                print(templist)
 
             lines.append(line)
             iterations += Wire.wires_layed
@@ -1062,7 +1067,6 @@ def make_mean(netlist, repeats=20):
         plt.show()
         print("Completing took {} iterations on average." .format(mean_iter))
         print("On average, {} conflicts were left." .format(mean_con))
-
 
 make_mean([2], repeats=1)
 # make_graph([2, 2, 2], repeats=1)

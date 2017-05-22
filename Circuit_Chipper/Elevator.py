@@ -447,3 +447,5 @@ if False:
     print('layers', elevator(chip, show=True))
     print('manhat', total_manhat(chip.wires))
     print('length', total_length(chip.wires))
+
+

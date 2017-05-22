@@ -493,5 +493,76 @@ def hill_climber(net, repeats):
     print('Min Length =', total_manhat(best_order))
     print()
 
+def alt_mutate_order(order):
+    i_1 = randint(0, round((len(order) - 1)/2))
+    i_2 = randint(0, len(order) - 1)
+    wire_1 = order[i_1]
+    wire_2 = order[i_2]
 
-hill_climber(1, 20)
+    mut_order = []
+    index = 0
+    while index < len(order):
+        if index == i_1:
+            mut_order.append(wire_2)
+        elif index == i_2:
+            mut_order.append(wire_1)
+        else:
+            mut_order.append(order[index])
+
+        index += 1
+
+    return mut_order
+
+def alt_hill_climber(net, repeats):
+    print('netlist', net)
+    p = ''
+
+    if net < 4:
+        p = 'print_1'
+    else:
+        p = 'print_2'
+
+    grid = eval("Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
+    shuffle(grid.wires)
+
+    best_order = []
+    for wire in grid.wires:
+        best_order.append(wire)
+
+    best_height = elevator(grid)
+    best_length = total_length(grid.wires)
+
+    print('Order 1 =', best_order)
+    print('Height =', best_height)
+    print('length =', best_length)
+    print()
+    grid.reset()
+
+    for rep in range(repeats - 1):
+        grid.reserve_gates()
+        new_order = alt_mutate_order(best_order)
+        grid.wires = new_order
+        new_height = elevator(grid)
+        new_length = total_length(grid.wires)
+
+        print('Order', str(rep), '=', new_order)
+        print('Height =', new_height)
+        print('Length =', new_length)
+
+        if new_length < best_length:
+            best_order = new_order
+            best_height = new_height
+            best_length = new_length
+            print('shorter length!')
+        print(best_length)
+        print()
+        grid.reset()
+
+    print('Best Order =', best_order)
+    print('Best Height =', best_height)
+    print('Best Length =', best_length)
+    print('Min Length =', total_manhat(best_order))
+    print()
+
+
+alt_hill_climber(6, 500)
