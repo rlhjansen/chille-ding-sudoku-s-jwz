@@ -493,29 +493,36 @@ def hill_climber(net, repeats):
     print('Min Length =', total_manhat(best_order))
     print()
 
-def alt_mutate_order(order):
-    i_1 = randint(0, round((len(order) - 1)/2))
-    i_2 = randint(0, len(order) - 1)
-    wire_1 = order[i_1]
-    wire_2 = order[i_2]
+def alt_mutate_order(order, mutations):
+    currentmut = order
+    for _ in range(mutations):
+        i_1 = randint(0, len(order) - 1)
+        i_2 = randint(0, len(order) - 1)
+        while i_1 == i_2:
+            i_2 = randint(0, len(order) - 1)
+        wire_1 = currentmut[i_1]
+        wire_2 = currentmut[i_2]
 
-    mut_order = []
-    index = 0
-    while index < len(order):
-        if index == i_1:
-            mut_order.append(wire_2)
-        elif index == i_2:
-            mut_order.append(wire_1)
-        else:
-            mut_order.append(order[index])
+        mut_order = []
+        index = 0
+        while index < len(order):
+            if index == i_1:
+                mut_order.append(wire_2)
+            elif index == i_2:
+                mut_order.append(wire_1)
+            else:
+                mut_order.append(currentmut[index])
 
-        index += 1
+            index += 1
+        currentmut = mut_order
 
-    return mut_order
+    return currentmut
 
 def alt_hill_climber(net, repeats):
+    output_file = open("output.txt", "w")
     print('netlist', net)
     p = ''
+
 
     if net < 4:
         p = 'print_1'
@@ -537,10 +544,16 @@ def alt_hill_climber(net, repeats):
     print('length =', best_length)
     print()
     grid.reset()
-
+    count = 0
+    mutations = 1
     for rep in range(repeats - 1):
+        count += 1
+        if count > 20*mutations**2:
+            count = 0
+            mutations +=1
+
         grid.reserve_gates()
-        new_order = alt_mutate_order(best_order)
+        new_order = alt_mutate_order(best_order, mutations)
         grid.wires = new_order
         new_height = elevator(grid)
         new_length = total_length(grid.wires)
@@ -548,21 +561,106 @@ def alt_hill_climber(net, repeats):
         print('Order', str(rep), '=', new_order)
         print('Height =', new_height)
         print('Length =', new_length)
-
+        output_file.write("[" + str(new_order) + ", " + str(new_length) + "]\n")
         if new_length < best_length:
             best_order = new_order
             best_height = new_height
             best_length = new_length
             print('shorter length!')
-        print(best_length)
+            count -= 20*(mutations-1)**2
+            mutations -= 1
+            if count<0 or mutations <1:
+                count = 0
+                mutations = 1
+        elif new_length == best_length and new_height < best_height:
+            best_order = new_order
+            best_height = new_height
+            best_length = new_length
+            print('shorter length!')
+            count -= 20*(mutations-1)**2
+            mutations -= 1
+            if count < 0 or mutations < 1:
+                count = 0
+                mutations = 1
         print()
         grid.reset()
-
     print('Best Order =', best_order)
     print('Best Height =', best_height)
     print('Best Length =', best_length)
     print('Min Length =', total_manhat(best_order))
     print()
+    output_file.close()
 
 
-alt_hill_climber(6, 500)
+#batchsize/survivesize must be a whole number
+def decreasing_shuffle_climber(net, batchsize, survivesize, shuffle_decrement, start_mutate=0):
+    generationcounter = 0
+    print('netlist', net)
+    p = ''
+
+    if net < 4:
+        p = 'print_1'
+    else:
+        p = 'print_2'
+
+    grid = eval("Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
+    orderlist = [None] * batchsize
+    resultlist = [None] * batchsize
+    grid.reset()
+    for i in range(batchsize):
+        shuffle(grid.wires)
+        order = []
+        for wire in grid.wires:
+            order.append(wire)
+        orderlist[i] = order
+
+    for i in range(batchsize):
+        grid.reserve_gates()
+        grid.wires = orderlist[i]
+        height = elevator(grid)
+        wire_length = total_length(grid.wires)
+        resultlist[i] = wire_length
+        print("Height is: ", height)
+        print("Wire_length", wire_length)
+        print("manhattan distance:", total_manhat(grid.wires))
+        grid.reset()
+    if start_mutate == 0:
+        mutations = len(grid.wires)
+    else:
+        mutations = start_mutate
+    while mutations > 0:
+        generationcounter += 1
+        cumulative_wirelength = 0
+        for i in range(int(batchsize/survivesize)):
+            if i == 0:
+                for j in range(survivesize):
+                    cumulative_wirelength += resultlist[j]
+            else:
+                for j in range(survivesize):
+                    grid.reserve_gates()
+                    orderlist[i*survivesize+j] = alt_mutate_order(orderlist[j],mutations)
+                    grid.wires = orderlist[i*survivesize+j]
+                    height = elevator(grid)
+                    wire_length = total_length(grid.wires)
+                    resultlist[i] = wire_length
+                    cumulative_wirelength += wire_length
+                    print("Height is: ", height)
+                    print("Wire_length", wire_length)
+                    print("manhattan distance:", total_manhat(grid.wires), "generation:", generationcounter)
+                    resultlist[i*survivesize+j] = total_length(grid.wires)
+                    grid.reset()
+            resultlist, orderlist = (list(x) for x in zip(
+            *sorted(zip(resultlist, orderlist), key=lambda pair: pair[0])))
+        mutations -= shuffle_decrement
+        print("generationaverage is:", round(cumulative_wirelength/batchsize))
+    grid.reserve_gates()
+    grid.wires=orderlist[0]
+    best_height = elevator(grid)
+    best_length = total_length(grid.wires)
+    print('Best Order =', orderlist[0])
+    print('Best Height =', best_height)
+    print('Best Length =', best_length)
+    print('Min Length =', total_manhat(best_order))
+    print()
+
+decreasing_shuffle_climber(1, 200, 40, 2, 10)
