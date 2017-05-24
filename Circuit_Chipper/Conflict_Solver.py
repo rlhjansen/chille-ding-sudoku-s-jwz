@@ -1068,5 +1068,5 @@ def make_mean(netlist, repeats=20):
         print("Completing took {} iterations on average." .format(mean_iter))
         print("On average, {} conflicts were left." .format(mean_con))
 
-make_mean([2], repeats=1)
+make_mean([1,2], repeats=1)
 # make_graph([2, 2, 2], repeats=1)

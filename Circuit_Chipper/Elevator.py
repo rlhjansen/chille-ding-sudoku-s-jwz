@@ -438,10 +438,10 @@ def elevator_all():
         del grid
 
 
-elevator_all()
+#elevator_all()
 
-if False:
-    chip = Grid('print_2', netlists.netlist_6)
+if True:
+    chip = Grid('print_1', netlists.netlist_1)
     chip.wires.sort(key=lambda wire: (wire.a_star_cost(y=False), wire.man_dis()), reverse=True)
 
     print('layers', elevator(chip, show=True))
