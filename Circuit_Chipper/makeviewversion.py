@@ -750,8 +750,9 @@ def makeNewWire(wire, size, dimensions):
 # input examples
 # netlist_list = [2,4,3], average_.. = 5, methods = ["ppa","helev","decrmut"]
 def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True):
+    salt = str(randint(0,200))
     for net in netlist_list:
-        filename = "netlist_" + str(net) +"_" + str(methods) + "repeats_is_" + str(average_over_X_repeats) + "salt_is" + str(randint(0, 200)) + ".png"
+        filename = "netlist_" + str(net) +"_" + str(methods) + "repeats_is_" + str(average_over_X_repeats) + "salt_is" + salt + ".png"
         textfilename = "netlist_" + str(net) +"_" + str(methods) + "repeats_is_" + str(average_over_X_repeats) + "salt_is" + str(randint(0, 200)) + ".txt"
         textfile = open(textfilename, 'w')
         fig, ax = plt.subplots()
@@ -768,15 +769,17 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
                     ppa_results[k] = ppa.PPA_data(net)
                 ppa_iteration_sizes = [0]*average_over_X_repeats
                 for k in range(average_over_X_repeats):
-                    ppa_iteration_sizes[k] = len(ppa_results[k][0])
+                    ppa_iteration_sizes[k] = len(ppa_results[k][0])-1
                 ppa_average_lengths = [0]*max(ppa_iteration_sizes)
                 for k in range(average_over_X_repeats):
                     for i in range(len(ppa_results[k][0])-1):
                         ppa_average_lengths[i] += ppa_results[k][0][i]
                 ppa_iteration_sizes.sort()
-                for k in range(len(ppa_average_lengths)-1):
-                    while k > ppa_iteration_sizes[0]:
+                for k in range(len(ppa_average_lengths)):
+                    print("ok")
+                    if k == ppa_iteration_sizes[0]:
                         del ppa_iteration_sizes[0]
+                        print(ppa_iteration_sizes)
                     ppa_average_lengths[k] = ppa_average_lengths[k]/len(ppa_iteration_sizes)
                 ax.plot(ppa_average_lengths, 'g')
 
@@ -788,7 +791,7 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
                 for k in range(average_over_X_repeats):
                     for i in range(len(ppa_results[k][1])-1):
                         ppa_average_generation_points[i] += ppa_results[k][1][i]
-                for i in ppa_average_generation_points:
+                for i in range(len(ppa_average_generation_points)-1):
                     ppa_average_generation_points[i] = ppa_average_generation_points[i]/average_over_X_repeats
                 for xc in ppa_average_generation_points:
                     ax.axvline(x=xc, color='g')
@@ -802,16 +805,16 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
 
                 #data
                 best_heights = []
-                for k in average_over_X_repeats:
+                for k in range(average_over_X_repeats):
                     best_heights.append(ppa_results[k][4])
                 best_lengths = []
-                for k in average_over_X_repeats:
+                for k in range(average_over_X_repeats):
                     best_lengths.append(ppa_results[k][5])
                 best_orders = []
-                for k in average_over_X_repeats:
+                for k in range(average_over_X_repeats):
                     best_orders.append(ppa_results[k][3])
                 combined_height_order = []
-                for k in average_over_X_repeats:
+                for k in range(average_over_X_repeats):
                     combined_height_order.append([best_heights[k], best_orders[k]])
                 #sort
                 best_lengths, combined_height_order = (list(x) for x in zip(
@@ -831,13 +834,13 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
                 for k in range(average_over_X_repeats):
                     helev_results[k] = eh.hill_climber_data(net)
                 # line length plot
-                iteration_amount = len(helev_results[0][0])
+                iteration_amount = len(helev_results[0][0])-1
                 helev_average_lengths = [0]*iteration_amount
                 for k in range(average_over_X_repeats):
                     for i in range(len(helev_results[k][0]) - 1):
                         helev_average_lengths[i] += helev_results[k][0][i]
-                for k in range(len(helev_average_lengths) - 1):
-                    helev_average_lengths[k] = ppa_average_lengths[k] / average_over_X_repeats
+                for k in range(len(helev_average_lengths)):
+                    helev_average_lengths[k] = helev_average_lengths[k] / average_over_X_repeats
                 ax.plot(helev_average_lengths)
 
 
@@ -853,16 +856,16 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
 
                 # data possibilities
                 best_heights = []
-                for k in average_over_X_repeats:
+                for k in range(average_over_X_repeats):
                     best_heights.append(helev_results[k][3])
                 best_lengths = []
-                for k in average_over_X_repeats:
+                for k in range(average_over_X_repeats):
                     best_lengths.append(helev_results[k][4])
                 best_orders = []
-                for k in average_over_X_repeats:
+                for k in range(average_over_X_repeats):
                     best_orders.append(helev_results[k][2])
                 combined_height_order = []
-                for k in average_over_X_repeats:
+                for k in range(average_over_X_repeats):
                     combined_height_order.append(
                         [best_heights[k], best_orders[k]])
                 # sort
@@ -887,13 +890,13 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
                 #line length plot
                 decrmut_iteration_sizes = [0]*average_over_X_repeats
                 for k in range(average_over_X_repeats):
-                    decrmut_iteration_sizes[k] = len(decrmut_results[k][0])
+                    decrmut_iteration_sizes[k] = len(decrmut_results[k][0])-1
                 decrmut_average_lengths = [0]*max(decrmut_iteration_sizes)
                 for k in range(average_over_X_repeats):
                     for i in range(len(decrmut_results[k][0])-1):
                         decrmut_average_lengths[i] += decrmut_results[k][0][i]
                 decrmut_iteration_sizes.sort()
-                for k in range(len(decrmut_average_lengths)-1):
+                for k in range(len(decrmut_average_lengths)-0):
                     while k > decrmut_iteration_sizes[0]:
                         del decrmut_iteration_sizes[0]
                     decrmut_average_lengths[k] = decrmut_average_lengths[k]/len(decrmut_iteration_sizes)
@@ -907,7 +910,7 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
                 for k in range(average_over_X_repeats):
                     for i in range(len(decrmut_results[k][1])-1):
                         decrmut_average_generation_points[i] += decrmut_results[k][1][i]
-                for i in decrmut_average_generation_points:
+                for i in range(len(decrmut_average_generation_points)-1):
                     decrmut_average_generation_points[i] = decrmut_average_generation_points[i]/average_over_X_repeats
                 for xc in decrmut_average_generation_points:
                     ax.axvline(x=xc, color='c')
@@ -921,16 +924,16 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
 
                 #data possibilities
                 best_heights = []
-                for k in average_over_X_repeats:
+                for k in range(average_over_X_repeats):
                     best_heights.append(decrmut_results[k][4])
                 best_lengths = []
-                for k in average_over_X_repeats:
+                for k in range(average_over_X_repeats):
                     best_lengths.append(decrmut_results[k][5])
                 best_orders = []
-                for k in average_over_X_repeats:
+                for k in range(average_over_X_repeats):
                     best_orders.append(decrmut_results[k][3])
                 combined_height_order = []
-                for k in average_over_X_repeats:
+                for k in range(average_over_X_repeats):
                     combined_height_order.append([best_heights[k], best_orders[k]])
                 #sort
                 best_lengths, combined_height_order = (list(x) for x in zip(
@@ -949,7 +952,7 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
                 textfile.write(decrmut_text)
         if standardOn:
             standard_elevator_solution = el.return_value_elevator(net)
-            ax.axhline(standard_elevator_solution[1], 'r')
+            ax.axhline(standard_elevator_solution[1], color='r')
             standard_solution = standard_elevator_solution[2]
             standard_solution_height = standard_elevator_solution[0]
             repAstarOrder_text = "for netlist " + str(
@@ -961,6 +964,8 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
                                  "the resulting wire order is: " + str(
                 standard_solution) + "\n"
             textfile.write(repAstarOrder_text)
+        plt.ylabel('length')
+        plt.xlabel('iterations')
         fig.savefig(filename)
 
 
@@ -973,4 +978,4 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
 # examples
 # netlist_list = [2,4,3], average_.. = 5, methods = ["ppa","helev","decrmut"]
 
-create_graph([1], 1, ["ppa"], standardOn=True)
+create_graph([1], 3, ["ppa"], standardOn=True)

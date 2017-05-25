@@ -679,7 +679,7 @@ def decreasing_shuffle_climber(net, batchsize=480, survivesize=80, shuffle_decre
     plt.show()
 
 
-def decreasing_mutations(net, batchsize=480, survivesize=80, shuffle_decrement=1, start_mutate=8):
+def decreasing_mutations(net, batchsize=540, survivesize=90, shuffle_decrement=1, start_mutate=8):
     complete_lengthlist = []
     generationlist = []
     height_is_satisfied = 0
@@ -747,8 +747,8 @@ def decreasing_mutations(net, batchsize=480, survivesize=80, shuffle_decrement=1
                     resultlist[i*survivesize+j] = total_length(grid.wires)
                     grid.reset()
             complete_lengthlist.extend(resultlist)
-            generationlist.append(generationlist[-1]+len(complete_lengthlist))
-            resultlist, orderlist = (list(x) for x in zip(
+        generationlist.append(len(complete_lengthlist))
+        resultlist, orderlist = (list(x) for x in zip(
             *sorted(zip(resultlist, orderlist), key=lambda pair: pair[0])))
         mutations -= shuffle_decrement
         print("generationaverage is:", round(cumulative_wirelength/batchsize))
