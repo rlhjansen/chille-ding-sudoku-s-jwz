@@ -906,6 +906,7 @@ def PPA_data(net, maxdistance=8, generations=30, initialpopulation=200,
         if height < 18:
             complete_lengthlist.append(wire_length)
         resultlist.append(wire_length)
+        print("netlist is:", net)
         print("Height is: ", height)
         print("Wire_length", wire_length)
         print("manhattan distance:", total_manhat(grid.wires))

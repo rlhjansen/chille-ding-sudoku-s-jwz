@@ -766,6 +766,7 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
             if method == "ppa":
                 #line length plot
                 for k in range(average_over_X_repeats):
+                    print("repeat number", k, "of netlist", net)
                     ppa_results[k] = ppa.PPA_data(net)
                 ppa_iteration_sizes = [0]*average_over_X_repeats
                 for k in range(average_over_X_repeats):
@@ -978,4 +979,4 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
 # examples
 # netlist_list = [2,4,3], average_.. = 5, methods = ["ppa","helev","decrmut"]
 
-create_graph([1], 3, ["ppa"], standardOn=True)
+create_graph([1,2,3,4,5,6], 4, ["ppa"], standardOn=True)

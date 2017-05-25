@@ -741,6 +741,7 @@ def decreasing_mutations(net, batchsize=540, survivesize=90, shuffle_decrement=1
                     wire_length = total_length(grid.wires)
                     resultlist[i] = wire_length
                     cumulative_wirelength += wire_length
+                    print("netlist is", net)
                     print("Height is: ", height)
                     print("Wire_length", wire_length)
                     print("manhattan distance:", total_manhat(grid.wires), "generation:", generationcounter)
@@ -799,6 +800,7 @@ def hill_climber_data(net, repeats=5000):
         complete_lengthlist.append(new_length)
         if new_height < 9 and height_is_satisfied == 0:
             height_is_satisfied = rep
+        print("netlist is", net)
         print('Order', str(rep), '=', new_order)
         print('Height =', new_height)
         print('Length =', new_length)
