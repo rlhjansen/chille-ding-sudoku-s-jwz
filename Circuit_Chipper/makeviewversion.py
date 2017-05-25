@@ -7,6 +7,10 @@ import sys, os
 if sys.platform == 'win32':
     os.environ['SDL_VIDEO_CENTERED'] = '1'
 import GL
+import plant_propagation as ppa
+import Elevator_hill as eh
+import Elevator as el
+import matplotlib.pyplot as plt
 
 pygame.init()
 
@@ -741,5 +745,188 @@ def makeNewWire(wire, size, dimensions):
     return newWire
     #"""
 
-main(wireList, gatesList, size, Dimensions)
+# input examples
+# netlist_list = [2,4,3], average_.. = 5, methods = [ppa,helev,decrmut]
+def create_graph(netlist_list, average_over_X_repeats, methods):
+    for net in netlist_list:
+        if "ppa" in methods:
+            ppa_results = [None]*average_over_X_repeats
+        if "helev" in method:
+            helev_results = [None]*average_over_X_repeats
+        if "decrmut" in method:
+            decrmut_results = [None]*average_over_X_repeats
+        for method in methods:
+            if method == "ppa":
+                #line length plot
+                for k in range(average_over_X_repeats):
+                    ppa_results[k] = ppa.PPA_data(net)
+                ppa_iteration_sizes = [0]*average_over_X_repeats
+                for k in range(average_over_X_repeats):
+                    ppa_iteration_sizes[k] = len(ppa_results[k][0])
+                ppa_average_lengths = [0]*max(ppa_iteration_sizes)
+                for k in range(average_over_X_repeats):
+                    for i in range(len(ppa_results[k][0])-1):
+                        ppa_average_lengths[i] += ppa_results[k][0][i]
+                ppa_iteration_sizes.sort()
+                for k in range(len(ppa_average_lengths)-1):
+                    while k > ppa_iteration_sizes[0]:
+                        del ppa_iteration_sizes[0]
+                    ppa_average_lengths[k] = ppa_average_lengths[k]/len(ppa_iteration_sizes)
+                plt.plot(ppa_average_lengths)
 
+                # generation point plot
+                ppa_generation_amount = [0]*average_over_X_repeats
+                for k in range(average_over_X_repeats):
+                    ppa_generation_amount[k] = len(ppa_results[k][1])
+                ppa_average_generation_points = [0]*max(ppa_generation_amount)
+                for k in range(average_over_X_repeats):
+                    for i in range(len(ppa_results[k][1])-1):
+                        ppa_average_generation_points[i] += ppa_results[k][1][i]
+                for i in ppa_average_generation_points:
+                    ppa_average_generation_points[i] = ppa_average_generation_points[i]/average_over_X_repeats
+                for xc in ppa_average_generation_points:
+                    plt.axvline(x=xc, color='r')
+
+                #earliest/average first constraint satisfaction
+                first_constraint_satisfaction_list = []
+                for k in range(average_over_X_repeats):
+                    first_constraint_satisfaction_list.append(ppa_results[k][2])
+                # for earliest use min(...), for average use sum(...)/average_over..
+                plt.axhline(sum(first_constraint_satisfaction_list)/average_over_X_repeats, color='y')
+
+                #data possibilities
+                best_heights = []
+                for k in average_over_X_repeats:
+                    best_heights.append(ppa_results[k][4])
+                best_lengths = []
+                for k in average_over_X_repeats:
+                    best_lengths.append(ppa_results[k][5])
+                best_orders = []
+                for k in average_over_X_repeats:
+                    best_orders.append(ppa_results[k][3])
+                combined_height_order = []
+                for k in average_over_X_repeats:
+                    combined_height_order.append([best_heights[k], best_orders[k]])
+                #sort
+                best_lengths, combined_height_order = (list(x) for x in zip(
+                    *sorted(zip(best_lengths, combined_height_order),
+                            key=lambda pair: pair[0])))
+
+                best_height = combined_height_order[0][0]
+                best_order = combined_height_order[0][1]
+                best_length = best_lengths[0]
+
+            if method == "helev":
+                for k in range(average_over_X_repeats):
+                    helev_results[k] = eh.hill_climber_data(net)
+                # line length plot
+                iteration_amount = len(helev_results[0][0])
+                helev_average_lengths = [0]*iteration_amount
+                for k in range(average_over_X_repeats):
+                    for i in range(len(helev_results[k][0]) - 1):
+                        helev_average_lengths[i] += helev_results[k][0][i]
+                for k in range(len(helev_average_lengths) - 1):
+                    helev_average_lengths[k] = ppa_average_lengths[k] / average_over_X_repeats
+                plt.plot(helev_average_lengths)
+
+
+                # earliest/average first constraint satisfaction
+                first_constraint_satisfaction_list = []
+                for k in range(average_over_X_repeats):
+                    first_constraint_satisfaction_list.append(
+                        helev_results[k][1])
+                # for earliest use min(...), for average use sum(...)/average_over..
+                plt.axhline(sum(
+                    first_constraint_satisfaction_list) / average_over_X_repeats,
+                            color='g')
+
+                # data possibilities
+                best_heights = []
+                for k in average_over_X_repeats:
+                    best_heights.append(helev_results[k][3])
+                best_lengths = []
+                for k in average_over_X_repeats:
+                    best_lengths.append(helev_results[k][4])
+                best_orders = []
+                for k in average_over_X_repeats:
+                    best_orders.append(helev_results[k][2])
+                combined_height_order = []
+                for k in average_over_X_repeats:
+                    combined_height_order.append(
+                        [best_heights[k], best_orders[k]])
+                # sort
+                best_lengths, combined_height_order = (list(x) for x in zip(
+                    *sorted(zip(best_lengths, combined_height_order),
+                            key=lambda pair: pair[0])))
+
+                best_height = combined_height_order[0][0]
+                best_order = combined_height_order[0][1]
+                best_length = best_lengths[0]
+
+            if method == "decrmut":
+                for k in range(average_over_X_repeats):
+                    decrmut_results[k] = eh.decreasing_mutations(net)
+                #line length plot
+                decrmut_iteration_sizes = [0]*average_over_X_repeats
+                for k in range(average_over_X_repeats):
+                    decrmut_iteration_sizes[k] = len(decrmut_results[k][0])
+                decrmut_average_lengths = [0]*max(decrmut_iteration_sizes)
+                for k in range(average_over_X_repeats):
+                    for i in range(len(decrmut_results[k][0])-1):
+                        decrmut_average_lengths[i] += decrmut_results[k][0][i]
+                decrmut_iteration_sizes.sort()
+                for k in range(len(decrmut_average_lengths)-1):
+                    while k > decrmut_iteration_sizes[0]:
+                        del decrmut_iteration_sizes[0]
+                    decrmut_average_lengths[k] = decrmut_average_lengths[k]/len(decrmut_iteration_sizes)
+                plt.plot(decrmut_average_lengths)
+
+                # generation point plot
+                decrmut_generation_amount = [0]*average_over_X_repeats
+                for k in range(average_over_X_repeats):
+                    decrmut_generation_amount[k] = len(decrmut_results[k][1])
+                decrmut_average_generation_points = [0]*max(decrmut_generation_amount)
+                for k in range(average_over_X_repeats):
+                    for i in range(len(decrmut_results[k][1])-1):
+                        decrmut_average_generation_points[i] += decrmut_results[k][1][i]
+                for i in decrmut_average_generation_points:
+                    decrmut_average_generation_points[i] = decrmut_average_generation_points[i]/average_over_X_repeats
+                for xc in decrmut_average_generation_points:
+                    plt.axvline(x=xc, color='r')
+
+                #earliest/average first constraint satisfaction
+                first_constraint_satisfaction_list = []
+                for k in range(average_over_X_repeats):
+                    first_constraint_satisfaction_list.append(decrmut_results[k][2])
+                # for earliest use min(...), for average use sum(...)/average_over..
+                plt.axhline(sum(first_constraint_satisfaction_list)/average_over_X_repeats, color='m')
+
+                #data possibilities
+                best_heights = []
+                for k in average_over_X_repeats:
+                    best_heights.append(decrmut_results[k][4])
+                best_lengths = []
+                for k in average_over_X_repeats:
+                    best_lengths.append(decrmut_results[k][5])
+                best_orders = []
+                for k in average_over_X_repeats:
+                    best_orders.append(decrmut_results[k][3])
+                combined_height_order = []
+                for k in average_over_X_repeats:
+                    combined_height_order.append([best_heights[k], best_orders[k]])
+                #sort
+                best_lengths, combined_height_order = (list(x) for x in zip(
+                    *sorted(zip(best_lengths, combined_height_order),
+                            key=lambda pair: pair[0])))
+
+                best_height = combined_height_order[0][0]
+                best_order = combined_height_order[0][1]
+                best_length = best_lengths[0]
+
+
+        standard_elevator_solution = el.return_value_elevator(net)
+
+
+#main(wireList, gatesList, size, Dimensions)
+
+ppa.PPA_graph([2])

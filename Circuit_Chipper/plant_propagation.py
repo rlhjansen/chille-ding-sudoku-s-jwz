@@ -771,11 +771,109 @@ def decreasing_shuffle_climber(net, batchsize, survivesize, shuffle_decrement, s
 #def gather_decrshffle_climber():
 
 
+def PPA_graph(objectives, maxdistance=8, generations=30, initialpopulation=200, survivalrate=30, minchildren=2, maxchildren=10, saltnumber=999):
+    for net in objectives:
+        name = "PPA netlist-" + str(net) + "_"+ str(generations) + "_gen"  + str(survivalrate) + "_surv-" + str(minchildren) + "_min-" + str(maxchildren) + "_max-" + str(maxdistance) + "maxdis" +str(saltnumber) + ".png"
+        complete_lengthlist = []
+        generationpoints = []
+        print('netlist', net)
+        p = ''
 
-def PPA_graph(net, maxdistance, generations, initialpopulation, survivalrate,
-              minchildren, maxchildren):
+        if net < 4:
+            p = 'print_1'
+        else:
+            p = 'print_2'
+
+        grid = eval("Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
+        orderlist = []
+        resultlist = []
+        grid.reset()
+        BASIC_LENGTH = len(grid.wires)
+        for i in range(initialpopulation):
+            shuffle(grid.wires)
+            order = []
+            for wire in grid.wires:
+                order.append(wire)
+            if order not in orderlist:
+                orderlist.append(order)
+
+        for i in range(len(orderlist)-1):
+            grid.reserve_gates()
+            grid.wires = orderlist[i]
+            height = elevator(grid)
+            if height >= 12:
+                print(len(grid.wires))
+                print(grid.wires)
+                while len(grid.wires) < BASIC_LENGTH:
+                    grid.reset()
+                    grid.reserve_gates()
+                    grid.wires = orderlist[i]
+                    height = elevator(grid)
+            wire_length = total_length(grid.wires)
+            resultlist.append(wire_length)
+            print("Height is: ", height)
+            print("Wire_length", wire_length)
+            print("manhattan distance:", total_manhat(grid.wires))
+            grid.reset()
+        complete_lengthlist.extend(resultlist)
+        print(resultlist, orderlist)
+        currentplants = natural_selection(orderlist, resultlist, survivalrate)
+        for i in range(generations-1):
+            generationpoints.append(len(complete_lengthlist))
+            newplants = []
+            newresults = []
+            for plant in currentplants:
+                newplants.append(plant)
+                rank = currentplants.index(plant)
+                temp_plants = sprout(plant, rank, maxdistance, [minchildren, maxchildren, survivalrate])
+                for plant in temp_plants:
+                    if plant not in newplants:
+                        newplants.append(plant)
+            for plant in newplants:
+                grid.reset()
+                grid.reserve_gates()
+                grid.wires = plant
+                height = elevator(grid)
+                if height >= 12:
+                    print(len(grid.wires))
+                    print(grid.wires)
+                    while len(grid.wires) < BASIC_LENGTH:
+                        grid.reset()
+                        grid.reserve_gates()
+                        grid.wires = orderlist[i]
+                        height = elevator(grid)
+                print("generation", i)
+                print(height)
+                wirelength = total_length(grid.wires)
+                print(wirelength)
+                print()
+                newresults.append(wirelength)
+            complete_lengthlist.extend(newresults)
+            currentplants = natural_selection(newplants, newresults, survivalrate)
+        grid.reset()
+        grid.reserve_gates()
+        grid.wires=currentplants[0]
+        best_height = elevator(grid)
+        best_length = total_length(grid.wires)
+        plt.plot(complete_lengthlist)
+        print(complete_lengthlist)
+        for xc in generationpoints:
+            plt.axvline(x=xc, color='r')
+        plt.ylabel('length')
+        plt.xlabel('iterations')
+        plt.savefig(name)
+
+        print('Best Order =', orderlist[0])
+        print('Best Height =', best_height)
+        print('Best Length =', best_length)
+        print('Min Length =', total_manhat(orderlist[0]))
+        print()
+
+def PPA_data(net, maxdistance=8, generations=30, initialpopulation=200,
+                 survivalrate=30, minchildren=2, maxchildren=10):
     complete_lengthlist = []
     generationpoints = []
+    height_is_satisfied = 0
     print('netlist', net)
     p = ''
 
@@ -787,68 +885,81 @@ def PPA_graph(net, maxdistance, generations, initialpopulation, survivalrate,
     grid = eval("Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
     orderlist = []
     resultlist = []
-    grid.reset()
     for i in range(initialpopulation):
         shuffle(grid.wires)
         order = []
         for wire in grid.wires:
             order.append(wire)
-        if order not in orderlist:
-            orderlist.append(order)
-
-    for i in range(len(orderlist)-1):
+            if order not in orderlist:
+                orderlist.append(order)
+    delList = []
+    for i in range(len(orderlist) - 1):
+        grid.reset()
         grid.reserve_gates()
         grid.wires = orderlist[i]
         height = elevator(grid)
+        if height < 9 and height_is_satisfied == 0:
+            height_is_satisfied = i
         wire_length = total_length(grid.wires)
+        if height > 17:
+            delList.append(i)
+        if height < 18:
+            complete_lengthlist.append(wire_length)
         resultlist.append(wire_length)
         print("Height is: ", height)
         print("Wire_length", wire_length)
         print("manhattan distance:", total_manhat(grid.wires))
-        grid.reset()
-    complete_lengthlist.extend(resultlist)
+        print(resultlist, orderlist)
+    delList.reverse()
+    for i in delList:
+        del resultlist[i]
+        del orderlist[i]
     currentplants = natural_selection(orderlist, resultlist, survivalrate)
-    for _ in range(generations-1):
+    for i in range(generations - 1):
         generationpoints.append(len(complete_lengthlist))
         newplants = []
         newresults = []
         for plant in currentplants:
             newplants.append(plant)
             rank = currentplants.index(plant)
-            temp_plants = sprout(plant, rank, maxdistance, [minchildren, maxchildren, survivalrate])
+            temp_plants = sprout(plant, rank, maxdistance,
+                                     [minchildren, maxchildren, survivalrate])
             for plant in temp_plants:
                 if plant not in newplants:
                     newplants.append(plant)
+        delList = []
         for plant in newplants:
             grid.reset()
             grid.reserve_gates()
             grid.wires = plant
             height = elevator(grid)
+            if height < 9 and height_is_satisfied == 0:
+                height_is_satisfied = i
+            if height > 17:
+                delList.append(i)
+            print("generation", i)
             print(height)
             wirelength = total_length(grid.wires)
             print(wirelength)
             print()
             newresults.append(wirelength)
+        delList.reverse()
+        for i in delList:
+            del newresults[i]
+            del newplants[i]
         complete_lengthlist.extend(newresults)
-        currentplants = natural_selection(newplants, newresults, survivalrate)
+        generationpoints.append(len(complete_lengthlist))
+        currentplants = natural_selection(newplants, newresults,
+                                              survivalrate)
     grid.reset()
     grid.reserve_gates()
-    grid.wires=currentplants[0]
+    grid.wires = currentplants[0]
     best_height = elevator(grid)
     best_length = total_length(grid.wires)
-    plt.plot(complete_lengthlist)
-    for xc in generationpoints:
-        plt.axvline(x=xc, color='r')
-    plt.ylabel('length')
-    plt.xlabel('iterations')
-    plt.show()
-
-    print('Best Order =', orderlist[0])
-    print('Best Height =', best_height)
-    print('Best Length =', best_length)
-    print('Min Length =', total_manhat(orderlist[0]))
-    print()
+    return [complete_lengthlist, generationpoints, height_is_satisfied,
+                currentplants[0], best_height, best_length]
 
 
-#net, maxdistance, generations, initialpopulation, survivalrate, minchildren, maxchildren
-PPA_graph(6, 10, 10, 40, 40, 1, 15)
+
+#net, maxdistance, generations, initialpopulation, survivalrate, minchildren, maxchildren, saltnumber: empty = testrun
+PPA_graph([6,6,6,6,6], 2,1,4,1,1,1,2)

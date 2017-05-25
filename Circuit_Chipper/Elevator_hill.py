@@ -437,7 +437,7 @@ def mutate_order(order):
     return mut_order
 
 #
-def hill_climber(net, repeats):
+def hill_climber(net, repeats=5000):
     print('netlist', net)
     p = ''
 
@@ -593,7 +593,8 @@ def alt_hill_climber(net, repeats):
 
 
 #batchsize/survivesize must be a whole number
-def decreasing_shuffle_climber(net, batchsize, survivesize, shuffle_decrement, start_mutate=0):
+
+def decreasing_shuffle_climber(net, batchsize=480, survivesize=80, shuffle_decrement=1, start_mutate=8):
     complete_lengthlist = []
     generationlist = []
     generationcounter = 0
@@ -678,8 +679,155 @@ def decreasing_shuffle_climber(net, batchsize, survivesize, shuffle_decrement, s
     plt.show()
 
 
+def decreasing_mutations(net, batchsize=480, survivesize=80, shuffle_decrement=1, start_mutate=8):
+    complete_lengthlist = []
+    generationlist = []
+    height_is_satisfied = 0
+    generationcounter = 0
+    print('netlist', net)
+    p = ''
+
+    if net < 4:
+        p = 'print_1'
+    else:
+        p = 'print_2'
+
+    grid = eval("Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
+    orderlist = [None] * batchsize
+    resultlist = [None] * batchsize
+    grid.reset()
+    for i in range(batchsize):
+        shuffle(grid.wires)
+        order = []
+        for wire in grid.wires:
+            order.append(wire)
+        orderlist[i] = order
+
+    for i in range(batchsize):
+        grid.reserve_gates()
+        grid.wires = orderlist[i]
+        height = elevator(grid)
+        if height < 9 and height_is_satisfied == 0:
+            height_is_satisfied = i
+        wire_length = total_length(grid.wires)
+        resultlist[i] = wire_length
+        print("Height is: ", height)
+        print("Wire_length", wire_length)
+        print("manhattan distance:", total_manhat(grid.wires))
+        grid.reset()
+    complete_lengthlist.extend(resultlist)
+    generationlist.append(len(complete_lengthlist))
+    resultlist, orderlist = (list(x) for x in zip(
+        *sorted(zip(resultlist, orderlist), key=lambda pair: pair[0])))
+    if start_mutate == 0:
+        mutations = len(grid.wires)
+    else:
+        mutations = start_mutate
+    while mutations > 0:
+        generationcounter += 1
+        cumulative_wirelength = 0
+        for i in range(int(batchsize/survivesize)):
+            if i == 0:
+                for j in range(survivesize):
+                    cumulative_wirelength += resultlist[j]
+            else:
+                for j in range(survivesize):
+                    grid.reserve_gates()
+                    orderlist[i*survivesize+j] = alt_mutate_order(orderlist[j],mutations)
+                    grid.wires = orderlist[i*survivesize+j]
+                    height = elevator(grid)
+                    if height < 9 and height_is_satisfied == 0:
+                        height_is_satisfied = i
+                    wire_length = total_length(grid.wires)
+                    resultlist[i] = wire_length
+                    cumulative_wirelength += wire_length
+                    print("Height is: ", height)
+                    print("Wire_length", wire_length)
+                    print("manhattan distance:", total_manhat(grid.wires), "generation:", generationcounter)
+                    resultlist[i*survivesize+j] = total_length(grid.wires)
+                    grid.reset()
+            complete_lengthlist.extend(resultlist)
+            generationlist.append(generationlist[-1]+len(complete_lengthlist))
+            resultlist, orderlist = (list(x) for x in zip(
+            *sorted(zip(resultlist, orderlist), key=lambda pair: pair[0])))
+        mutations -= shuffle_decrement
+        print("generationaverage is:", round(cumulative_wirelength/batchsize))
+    grid.reserve_gates()
+    grid.wires=orderlist[0]
+    best_height = elevator(grid)
+    best_length = total_length(grid.wires)
+    print('Best Order =', orderlist[0])
+    print('Best Height =', best_height)
+    print('Best Length =', best_length)
+    print('Min Length =', total_manhat(orderlist[0]))
+    print()
+    return [complete_lengthlist, generationlist, height_is_satisfied, orderlist[0], best_height, best_length]
+
+def hill_climber_data(net, repeats=5000):
+    complete_lengthlist = []
+    height_is_satisfied = 0
+    print('netlist', net)
+    p = ''
+
+    if net < 4:
+        p = 'print_1'
+    else:
+        p = 'print_2'
+
+    grid = eval("Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
+    shuffle(grid.wires)
+
+    best_order = []
+    for wire in grid.wires:
+        best_order.append(wire)
+
+    best_height = elevator(grid)
+    best_length = total_length(grid.wires)
+
+    print('Order 1 =', best_order)
+    print('Height =', best_height)
+    print('length =', best_length)
+    print()
+    grid.reset()
+
+    for rep in range(repeats - 1):
+        grid.reserve_gates()
+        new_order = mutate_order(best_order)
+        grid.wires = new_order
+        new_height = elevator(grid)
+        new_length = total_length(grid.wires)
+        complete_lengthlist.append(new_length)
+        if new_height < 9 and height_is_satisfied == 0:
+            height_is_satisfied = rep
+        print('Order', str(rep), '=', new_order)
+        print('Height =', new_height)
+        print('Length =', new_length)
+
+        if new_height <= 9 and new_length <= best_length:
+            best_order = new_order
+            best_height = new_height
+            best_length = new_length
+            print('shorter length!')
+        elif best_height >= 9 and new_height < best_height:
+            best_order = new_order
+            best_height = new_height
+            best_length = new_length
+            print('lower height!')
+
+        print()
+        grid.reset()
+
+    print('Best Order =', best_order)
+    print('Best Height =', best_height)
+    print('Best Length =', best_length)
+    print('Min Length =', total_manhat(best_order))
+    print()
+    return [complete_lengthlist, height_is_satisfied, best_order, best_height, best_length]
+
+
 decreasing_shuffle_climber(6, 200, 40, 2, 12)
 
 #def gather_decrshffle_climber():
 
 #hill_climber(1, 2500)
+
