@@ -978,5 +978,9 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
 #create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
 # examples
 # netlist_list = [2,4,3], average_.. = 5, methods = ["ppa","helev","decrmut"]
-
+# ppa = plant propagation algortithm
+# helev = hillclimber elevator
+# decrmut = decreasing mutations
+# standardOn=True geeft een horizontale lijn van het resultaat uit jochem's algoritme
+# don't forget: meerdere methods geeft een zooi.
 create_graph([1,2,3,4,5,6], 4, ["ppa"], standardOn=True)
