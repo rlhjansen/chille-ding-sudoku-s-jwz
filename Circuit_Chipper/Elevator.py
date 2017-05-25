@@ -432,15 +432,39 @@ def elevator_all():
         print('Height =', elevator(grid))
         print('minimal length =', total_manhat(grid.wires))
         print('result length =', total_length(grid.wires))
+        print(grid.wires)
         print()
 
         grid.reset()
         del grid
 
+def return_value_elevator(net):
+    p = ''
+
+    if net < 4:
+        p = 'print_1'
+    else:
+        p = 'print_2'
+
+    print('netlist', net)
+
+    grid = eval("Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
+    grid.wires.sort(key=lambda wire: (wire.a_star_cost(y=False), wire.man_dis()),
+            reverse=True)
+    height = elevator(grid)
+    totallength = total_length(grid.wires)
+    print('Height =', height)
+    print('minimal length =', total_manhat(grid.wires))
+    print('result length =', totallength)
+    print()
+    return [height, totallength, grid.wires]
+
 
 #elevator_all()
 
-if True:
+#print(return_value_elevator(2))
+
+if False:
     chip = Grid('print_1', netlists.netlist_1)
     chip.wires.sort(key=lambda wire: (wire.a_star_cost(y=False), wire.man_dis()), reverse=True)
 

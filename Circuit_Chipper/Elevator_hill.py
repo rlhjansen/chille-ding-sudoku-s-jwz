@@ -825,7 +825,7 @@ def hill_climber_data(net, repeats=5000):
     return [complete_lengthlist, height_is_satisfied, best_order, best_height, best_length]
 
 
-decreasing_shuffle_climber(6, 200, 40, 2, 12)
+#decreasing_shuffle_climber(6, 200, 40, 2, 12)
 
 #def gather_decrshffle_climber():
 

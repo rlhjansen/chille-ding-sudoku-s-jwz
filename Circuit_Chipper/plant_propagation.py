@@ -771,7 +771,7 @@ def decreasing_shuffle_climber(net, batchsize, survivesize, shuffle_decrement, s
 #def gather_decrshffle_climber():
 
 
-def PPA_graph(objectives, maxdistance=8, generations=30, initialpopulation=200, survivalrate=30, minchildren=2, maxchildren=10, saltnumber=999):
+def PPA_graph(objectives, maxdistance=8, generations=1, initialpopulation=200, survivalrate=30, minchildren=2, maxchildren=10, saltnumber=999):
     for net in objectives:
         name = "PPA netlist-" + str(net) + "_"+ str(generations) + "_gen"  + str(survivalrate) + "_surv-" + str(minchildren) + "_min-" + str(maxchildren) + "_max-" + str(maxdistance) + "maxdis" +str(saltnumber) + ".png"
         complete_lengthlist = []
@@ -962,4 +962,4 @@ def PPA_data(net, maxdistance=8, generations=30, initialpopulation=200,
 
 
 #net, maxdistance, generations, initialpopulation, survivalrate, minchildren, maxchildren, saltnumber: empty = testrun
-PPA_graph([6,6,6,6,6], 2,1,4,1,1,1,2)
+#PPA_graph([6,6,6,6,6], 2,1,4,1,1,1,2)
