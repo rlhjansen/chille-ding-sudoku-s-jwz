@@ -892,7 +892,7 @@ def create_graph(netlist_list, average_over_X_repeats, methods):
                 for i in decrmut_average_generation_points:
                     decrmut_average_generation_points[i] = decrmut_average_generation_points[i]/average_over_X_repeats
                 for xc in decrmut_average_generation_points:
-                    plt.axvline(x=xc, color='r')
+                    plt.axvline(x=xc, color='c')
 
                 #earliest/average first constraint satisfaction
                 first_constraint_satisfaction_list = []
