@@ -415,6 +415,7 @@ def total_length(wires):
 
     return length
 
+
 #
 def mutate_order(order):
     i_1 = randint(0, len(order) - 1)
@@ -435,6 +436,7 @@ def mutate_order(order):
         index += 1
 
     return mut_order
+
 
 #
 def hill_climber(net, repeats=5000):
@@ -469,20 +471,21 @@ def hill_climber(net, repeats=5000):
         new_height = elevator(grid)
         new_length = total_length(grid.wires)
 
-        print('Order', str(rep), '=', new_order)
-        print('Height =', new_height)
-        print('Length =', new_length)
+        if False:
+            print('Order', str(rep), '=', new_order)
+            print('Height =', new_height)
+            print('Length =', new_length)
 
-        if new_height <= 9 and new_length <= best_length:
+        if new_height < 9 and new_length <= best_length:
             best_order = new_order
             best_height = new_height
             best_length = new_length
-            print('shorter length!')
-        elif best_height >= 9 and new_height < best_height:
+            print('=> length!')
+        elif best_height >= 9 and new_height <= best_height:
             best_order = new_order
             best_height = new_height
             best_length = new_length
-            print('lower height!')
+            print('=> height!')
 
         print()
         grid.reset()
@@ -492,6 +495,7 @@ def hill_climber(net, repeats=5000):
     print('Best Length =', best_length)
     print('Min Length =', total_manhat(best_order))
     print()
+
 
 def alt_mutate_order(order, mutations):
     currentmut = order
@@ -517,6 +521,7 @@ def alt_mutate_order(order, mutations):
         currentmut = mut_order
 
     return currentmut
+
 
 def alt_hill_climber(net, repeats):
     output_file = open("output.txt", "w")
@@ -797,7 +802,7 @@ def hill_climber_data(net, repeats=5000):
         grid.wires = new_order
         new_height = elevator(grid)
         new_length = total_length(grid.wires)
-        complete_lengthlist.append(new_length)
+        complete_lengthlist.append(best_length) # aangepast: new_length -> best_length
         if new_height < 9 and height_is_satisfied == 0:
             height_is_satisfied = rep
         print("netlist is", net)

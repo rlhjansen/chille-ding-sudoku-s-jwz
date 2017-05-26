@@ -27,6 +27,9 @@ class Grid:
         Wire.layed = 0
         Gate.num = 0
 
+        for wire in self.wires:
+            wire.remove()
+
     def set_nodes(self, print_n):
         nodes = {}
 
@@ -457,6 +460,7 @@ def return_value_elevator(net):
     print('minimal length =', total_manhat(grid.wires))
     print('result length =', totallength)
     print()
+
     return [height, totallength, grid.wires]
 
 
