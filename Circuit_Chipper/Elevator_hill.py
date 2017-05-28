@@ -42,7 +42,7 @@ class Grid:
         line = line.split()
         self.x = int(line[0])
         self.y = int(line[1])
-        self.z = int(line[2]) + 10
+        self.z = int(line[2]) + 30
 
         for z in range(self.z):
             for y in range(self.y):
@@ -458,10 +458,11 @@ def hill_climber(net, repeats=5000):
     best_height = elevator(grid)
     best_length = total_length(grid.wires)
 
-    print('Order 1 =', best_order)
-    print('Height =', best_height)
-    print('length =', best_length)
-    print()
+    if False:
+        print('Order 1 =', best_order)
+        print('Height =', best_height)
+        print('length =', best_length)
+        print()
     grid.reset()
 
     for rep in range(repeats - 1):
@@ -476,16 +477,11 @@ def hill_climber(net, repeats=5000):
             print('Height =', new_height)
             print('Length =', new_length)
 
-        if new_height < 9 and new_length <= best_length:
+        if new_length <= best_length:
             best_order = new_order
             best_height = new_height
             best_length = new_length
             print('=> length!')
-        elif best_height >= 9 and new_height <= best_height:
-            best_order = new_order
-            best_height = new_height
-            best_length = new_length
-            print('=> height!')
 
         print()
         grid.reset()
@@ -544,10 +540,11 @@ def alt_hill_climber(net, repeats):
     best_height = elevator(grid)
     best_length = total_length(grid.wires)
 
-    print('Order 1 =', best_order)
-    print('Height =', best_height)
-    print('length =', best_length)
-    print()
+    if False:
+        print('Order 1 =', best_order)
+        print('Height =', best_height)
+        print('length =', best_length)
+        print()
     grid.reset()
     count = 0
     mutations = 1
@@ -563,9 +560,10 @@ def alt_hill_climber(net, repeats):
         new_height = elevator(grid)
         new_length = total_length(grid.wires)
 
-        print('Order', str(rep), '=', new_order)
-        print('Height =', new_height)
-        print('Length =', new_length)
+        if False:
+            print('Order', str(rep), '=', new_order)
+            print('Height =', new_height)
+            print('Length =', new_length)
         output_file.write("[" + str(new_order) + ", " + str(new_length) + "]\n")
         if new_length < best_length:
             best_order = new_order
@@ -790,10 +788,11 @@ def hill_climber_data(net, repeats=5000):
     best_height = elevator(grid)
     best_length = total_length(grid.wires)
 
-    print('Order 1 =', best_order)
-    print('Height =', best_height)
-    print('length =', best_length)
-    print()
+    if False:
+        print('Order 1 =', best_order)
+        print('Height =', best_height)
+        print('length =', best_length)
+        print()
     grid.reset()
 
     for rep in range(repeats - 1):
@@ -805,23 +804,20 @@ def hill_climber_data(net, repeats=5000):
         complete_lengthlist.append(best_length) # aangepast: new_length -> best_length
         if new_height < 9 and height_is_satisfied == 0:
             height_is_satisfied = rep
-        print("netlist is", net)
-        print('Order', str(rep), '=', new_order)
-        print('Height =', new_height)
-        print('Length =', new_length)
 
-        if new_height <= 9 and new_length <= best_length:
+        if False:
+            print("netlist is", net)
+            print('Order', str(rep), '=', new_order)
+            print('Height =', new_height)
+            print('Length =', new_length)
+
+        if new_length <= best_length:
             best_order = new_order
             best_height = new_height
             best_length = new_length
-            print('shorter length!')
-        elif best_height >= 9 and new_height < best_height:
-            best_order = new_order
-            best_height = new_height
-            best_length = new_length
-            print('lower height!')
+            print(net, 'shorter length!', best_length)
 
-        print()
+        # print()
         grid.reset()
 
     print('Best Order =', best_order)
