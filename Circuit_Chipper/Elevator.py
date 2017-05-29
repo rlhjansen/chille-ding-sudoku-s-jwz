@@ -1,5 +1,9 @@
-#
-#
+# This program tries to solve the chip by using the elevator method. The
+# elevator reserves places next to gates for the wires that need to connect
+# those gates. Then it tries to lay all wires a-star on the base layer. If not
+# all gates are connected, it lifts all unconnected wires to height = 1 and
+# tries to connect them again. This process repeats until all gates are
+# connected.
 
 import netlists
 import queue as Q
@@ -108,6 +112,21 @@ class Grid:
                 for row in layer:
                     print(row)
                 print()
+
+    # Returns a list in which all the routes of all wires are.
+    def all_coord(self):
+        all_coords = []
+
+        for wire in self.wires:
+            coords = []
+
+            coords.append(wire.start.coordinate)
+            coords += wire.coordinates
+            coords.append(wire.end.coordinate)
+
+            all_coords.append(coords)
+
+        return all_coords
 
 
 # These connect gates. They may not intersect each other.

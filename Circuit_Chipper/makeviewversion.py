@@ -970,7 +970,6 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
         fig.savefig(filename)
 
 
-
 #main(wireList, gatesList, size, Dimensions)
 
 #ppa.PPA_graph([2])
@@ -983,4 +982,5 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
 # decrmut = decreasing mutations
 # standardOn=True geeft een horizontale lijn van het resultaat uit jochem's algoritme
 # don't forget: meerdere methods geeft een zooi.
+
 create_graph([6], 4, ["decrmut"], standardOn=True)
