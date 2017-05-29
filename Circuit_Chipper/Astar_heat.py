@@ -547,7 +547,10 @@ def a_star_heat(grid):
 def file_to_list(file_name):
     file = open(file_name)
     file.readline()
-    string = file.readline()
+    string = file.readline()[20:-2]
+
+    string = string.replace(',', '')
+    return string.split()
 
 
 # hill_heat('print_1', netlists.netlist_3, 10000)
