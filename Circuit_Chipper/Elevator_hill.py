@@ -7,6 +7,10 @@ import queue as Q
 from random import shuffle
 from random import randint
 import matplotlib.pyplot as plt
+from statistics import mean
+from statistics import variance
+import Astar_heat as AstarH
+
 
 
 
@@ -687,6 +691,8 @@ def decreasing_mutations(net, batchsize=540, survivesize=90, shuffle_decrement=1
     generationlist = []
     height_is_satisfied = 0
     generationcounter = 0
+    shortest = 1000000000
+    shortlist = []
     print('netlist', net)
     p = ''
 
@@ -705,20 +711,35 @@ def decreasing_mutations(net, batchsize=540, survivesize=90, shuffle_decrement=1
         for wire in grid.wires:
             order.append(wire)
         orderlist[i] = order
-
+    shortresultlist = []
     for i in range(batchsize):
         grid.reserve_gates()
         grid.wires = orderlist[i]
         height = elevator(grid)
+        while height > 17:
+            grid.reset()
+            grid.reserve_gates()
+            shuffle(grid.wires)
+            temp = []
+            for wire in grid.wires:
+                temp.append(wire)
+            grid.wires = temp
+            height = elevator(grid)
         if height < 9 and height_is_satisfied == 0:
             height_is_satisfied = i
         wire_length = total_length(grid.wires)
+        if wire_length<shortest:
+            shortest = wire_length
+            print("Height is: ", height)
+            print("Wire_length", wire_length)
+            print("manhattan distance:", total_manhat(grid.wires))
+            print("netlist", net)
+            print()
         resultlist[i] = wire_length
-        print("Height is: ", height)
-        print("Wire_length", wire_length)
-        print("manhattan distance:", total_manhat(grid.wires))
+        shortresultlist.append(shortest)
+        shortlist.append(shortest)
         grid.reset()
-    complete_lengthlist.extend(resultlist)
+    complete_lengthlist.extend(shortlist)
     generationlist.append(len(complete_lengthlist))
     resultlist, orderlist = (list(x) for x in zip(
         *sorted(zip(resultlist, orderlist), key=lambda pair: pair[0])))
@@ -741,17 +762,32 @@ def decreasing_mutations(net, batchsize=540, survivesize=90, shuffle_decrement=1
                     height = elevator(grid)
                     if height < 9 and height_is_satisfied == 0:
                         height_is_satisfied = i
+                    while height > 17:
+                        grid.reset()
+                        grid.reserve_gates()
+                        shuffle(grid.wires)
+                        temp = alt_mutate_order(orderlist[j], mutations)
+                        grid.wires = temp
+                        height = elevator(grid)
                     wire_length = total_length(grid.wires)
+                    if wire_length < shortest:
+                        shortest = wire_length
+                        print("netlist is", net)
+                        print("Height is: ", height)
+                        print("Wire_length", wire_length)
+                        print("manhattan distance:", total_manhat(grid.wires),
+                              "generation:", generationcounter)
                     resultlist[i] = wire_length
+                    shortlist.append(shortest)
                     cumulative_wirelength += wire_length
-                    print("netlist is", net)
-                    print("Height is: ", height)
-                    print("Wire_length", wire_length)
-                    print("manhattan distance:", total_manhat(grid.wires), "generation:", generationcounter)
                     resultlist[i*survivesize+j] = total_length(grid.wires)
                     grid.reset()
+            previous_generation_length = len(complete_lengthlist)
             complete_lengthlist.extend(resultlist)
-        generationlist.append(len(complete_lengthlist))
+            if len(generationlist) > 1:
+                generationlist.append(generationlist[-1] + len(complete_lengthlist)- previous_generation_length)
+            if len(generationlist) == 1:
+                generationlist.append(generationlist[-1]+ len(complete_lengthlist))
         resultlist, orderlist = (list(x) for x in zip(
             *sorted(zip(resultlist, orderlist), key=lambda pair: pair[0])))
         mutations -= shuffle_decrement
@@ -765,7 +801,7 @@ def decreasing_mutations(net, batchsize=540, survivesize=90, shuffle_decrement=1
     print('Best Length =', best_length)
     print('Min Length =', total_manhat(orderlist[0]))
     print()
-    return [complete_lengthlist, generationlist, height_is_satisfied, orderlist[0], best_height, best_length]
+    return [shortlist, generationlist, height_is_satisfied, orderlist[0], best_height, best_length]
 
 def hill_climber_data(net, repeats=5000):
     complete_lengthlist = []
@@ -828,9 +864,61 @@ def hill_climber_data(net, repeats=5000):
     return [complete_lengthlist, height_is_satisfied, best_order, best_height, best_length]
 
 
+def randomn_orders_data(net, num_of_randoms=5000, methodstring):
+    filename = "netlist " + str(net) + "random averages over " +str(num_of_randoms) +"with " + str(methodstring)
+    writefile = open(filename, 'w')
+    print('netlist', net)
+    p = ''
+
+    if net < 4:
+        p = 'print_1'
+    else:
+        p = 'print_2'
+    if methodstring == "elev":
+        grid = eval("Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
+    elif methodstring == "A*Heat":
+        grid = eval("AstarH.Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
+        heatdict = {1:(0,2), \
+                    2:(0,0,2), \
+                    3:value, \   # needs checking
+                    4:value, \
+                    5:value, \
+                    6:value}
+        heatlist = heatdict[net]
+        grid.set_heat(0,heatlist)
+    orderlist = [None] * num_of_randoms
+    resultlist = [None] * num_of_randoms
+    height_resultlist = [None] * num_of_randoms
+    for i in range(num_of_randoms):
+        orderlist[i] = shuffle(grid.wires)
+    for i in range(num_of_randoms):
+        if methodstring == "elev":
+            grid.reset()
+            grid.reserve_gates()
+            grid.wires = orderlist[i]
+            height = elevator(grid)
+            resultlist[i] = total_length(grid.wires)
+        elif methodstring == "A*Heat":
+            AstarH.grid.reset()
+            AstarH.grid.reserve_gates()
+            AstarH.grid.wires = orderlist[i]
+            height = AstarH.a_star_heat(grid)
+            resultlist[i] = AstarH.total_length(grid.wires)
+        height_resultlist[i] = height
+    random_mean = mean(resultlist)
+    random_variance = variance(resultlist)
+    random_height_mean = mean(height_resultlist)
+    text = "netlist is " + str(net) + "\n" + \
+        "mean length is " + str(random_mean) + "\n" + \
+        "mean height is " + str(random_height_mean) + "\n" + \
+        "length variance is" + str(random_variance) + "\n"
+    writefile.write(text)
+    writefile.close()
+    return [random_mean, random_variance, random_height_mean]
+
+
 #decreasing_shuffle_climber(6, 200, 40, 2, 12)
 
-#def gather_decrshffle_climber():
 
 #hill_climber(1, 2500)
 

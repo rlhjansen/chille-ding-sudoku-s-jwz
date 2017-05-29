@@ -750,10 +750,10 @@ def makeNewWire(wire, size, dimensions):
 # input examples
 # netlist_list = [2,4,3], average_.. = 5, methods = ["ppa","helev","decrmut"]
 def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True):
-    salt = str(randint(0,200))
+    salt = str(randint(0,20000000))
     for net in netlist_list:
         filename = "netlist_" + str(net) +"_" + str(methods) + "repeats_is_" + str(average_over_X_repeats) + "salt_is" + salt + ".png"
-        textfilename = "netlist_" + str(net) +"_" + str(methods) + "repeats_is_" + str(average_over_X_repeats) + "salt_is" + str(randint(0, 200)) + ".txt"
+        textfilename = "netlist_" + str(net) +"_" + str(methods) + "repeats_is_" + str(average_over_X_repeats) + "salt_is" + salt + ".txt"
         textfile = open(textfilename, 'w')
         fig, ax = plt.subplots()
         if "ppa" in methods:
@@ -771,9 +771,9 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
                 ppa_iteration_sizes = [0]*average_over_X_repeats
                 for k in range(average_over_X_repeats):
                     ppa_iteration_sizes[k] = len(ppa_results[k][0])-1
-                ppa_average_lengths = [0]*max(ppa_iteration_sizes)
+                ppa_average_lengths = [0]*min(ppa_iteration_sizes)
                 for k in range(average_over_X_repeats):
-                    for i in range(len(ppa_results[k][0])-1):
+                    for i in range(len(ppa_average_lengths)):
                         ppa_average_lengths[i] += ppa_results[k][0][i]
                 ppa_iteration_sizes.sort()
                 for k in range(len(ppa_average_lengths)):
@@ -782,7 +782,7 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
                         del ppa_iteration_sizes[0]
                         print(ppa_iteration_sizes)
                     ppa_average_lengths[k] = ppa_average_lengths[k]/len(ppa_iteration_sizes)
-                ax.plot(ppa_average_lengths, 'g')
+                ax.plot(ppa_average_lengths, 'b')
 
                 # generation point plot
                 ppa_generation_amount = [0]*average_over_X_repeats
@@ -892,9 +892,9 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
                 decrmut_iteration_sizes = [0]*average_over_X_repeats
                 for k in range(average_over_X_repeats):
                     decrmut_iteration_sizes[k] = len(decrmut_results[k][0])-1
-                decrmut_average_lengths = [0]*max(decrmut_iteration_sizes)
+                decrmut_average_lengths = [0]*min(decrmut_iteration_sizes)
                 for k in range(average_over_X_repeats):
-                    for i in range(len(decrmut_results[k][0])-1):
+                    for i in range(len(decrmut_average_lengths)):
                         decrmut_average_lengths[i] += decrmut_results[k][0][i]
                 decrmut_iteration_sizes.sort()
                 for k in range(len(decrmut_average_lengths)-0):
@@ -913,8 +913,8 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
                         decrmut_average_generation_points[i] += decrmut_results[k][1][i]
                 for i in range(len(decrmut_average_generation_points)-1):
                     decrmut_average_generation_points[i] = decrmut_average_generation_points[i]/average_over_X_repeats
-                for xc in decrmut_average_generation_points:
-                    ax.axvline(x=xc, color='c')
+                #for xc in decrmut_average_generation_points:
+                #    ax.axvline(x=xc, color='c')
 
                 #earliest/average first constraint satisfaction
                 first_constraint_satisfaction_list = []
@@ -983,4 +983,4 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
 # decrmut = decreasing mutations
 # standardOn=True geeft een horizontale lijn van het resultaat uit jochem's algoritme
 # don't forget: meerdere methods geeft een zooi.
-create_graph([1,2,3,4,5,6], 4, ["ppa"], standardOn=True)
+create_graph([6], 4, ["decrmut"], standardOn=True)
