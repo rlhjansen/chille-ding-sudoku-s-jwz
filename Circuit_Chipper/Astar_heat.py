@@ -398,11 +398,11 @@ def a_star_all(wires):
     return layed, not_layed
 
 
-#
+# Return a heat_list similar to the input list.
 def mutate_heat(heat_list):
     new_list = list(heat_list)
-
     mut = rn.randint(0, 2)
+
     if new_list == [] or mut == 0:
         new_heat = rn.randint(0, 20)
         new_list.append(new_heat)
@@ -415,16 +415,18 @@ def mutate_heat(heat_list):
     return tuple(new_list)
 
 
-#
+# Find a heat_list that can solve the netlist, using hillclimber.
 def hill_heat(print_n, netlist, iterations):
     grid = Grid(print_n, netlist)
     rn.shuffle(grid.wires)
     grid.reserve_gates()
     best_heat = ()
     best_layed = 0
-    past_heats = set(best_heat)
+    past_heats = set(best_heat)  # We don't want the same heats twice
 
     for _ in range(iterations):
+
+        # Make a new heat.
         new_heat = mutate_heat(best_heat)
         while new_heat in past_heats:
             new_heat = mutate_heat(new_heat)
@@ -435,6 +437,7 @@ def hill_heat(print_n, netlist, iterations):
         new_layed = layed[0]
         past_heats.add(new_heat)
 
+        #
         if layed[1] and new_layed >= best_layed:
             best_layed = new_layed
             best_heat = new_heat
@@ -492,18 +495,17 @@ def total_length(wires):
 
 #
 def a_star_heat(grid):
-    not_layed = 0
+    num_layed = 0
 
     for wire in grid.wires:
         wire.remove()
         route = wire.a_star()
 
-        if route == False:
-            not_layed += 1
-        else:
+        if route != False:
             wire.lay(route)
+            num_layed += 1
 
-    return not_layed
+    return num_layed
 
 
 hill_heat('print_1', netlists.netlist_3, 10000)
