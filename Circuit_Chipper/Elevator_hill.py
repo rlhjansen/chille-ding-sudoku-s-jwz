@@ -881,7 +881,7 @@ def hill_climber_data(net, repeats=5000):
     return [complete_lengthlist, height_is_satisfied, best_order, best_height, best_length]
 
 
-def randomn_orders_data(net, num_of_randoms=5000, methodstring):
+def random_orders_data(net, methodstring, num_of_randoms=5000):
     filename = "netlist " + str(net) + "random averages over " +str(num_of_randoms) +"with " + str(methodstring)
     writefile = open(filename, 'w')
     print('netlist', net)

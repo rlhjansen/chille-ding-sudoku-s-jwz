@@ -3,8 +3,11 @@
 # way, gates can't become too crowded.
 
 import netlists
+import global_variables as gv
 import queue as Q
 import random as rn
+from random import shuffle
+from random import randint, random
 
 
 # This keeps track of where, which object is placed on the chip.
@@ -542,6 +545,174 @@ def a_star_heat(grid):
 
     return num_layed
 
+# survivestats = [min, max, rate]
+def sprout(order, rank, maxdistance, survivestats):
+    positional_chance = ((survivestats[2] - rank+1) / (survivestats[2]+1))*4/5+0.1
+    avg_mutations = round(((1-positional_chance)*8/10+0.1)*maxdistance)
+    mutationlist = []
+    extra_sprouts = randint(0, survivestats[1]) - survivestats[0]
+    new_orders = []
+    for i in range(survivestats[0]+extra_sprouts):
+        if random() < positional_chance/2+0.5:
+            mutations = avg_mutations
+            while random() < positional_chance:
+                mutations -=1
+                if mutations<1:
+                    break
+            while random() > positional_chance:
+                mutations += 1
+                if mutations >maxdistance:
+                    break
+                #print("haha andersom gefokt")
+            print("finish whiles")
+            mutationlist.append(mutations)
+    for mutation in mutationlist:
+        if mutation < 0:
+            mutation = 0
+        if mutation > maxdistance:
+            mutation = maxdistance
+        newsprout = alt_mutate_order(order, mutation)
+        print("haha gemuteerde bitch")
+        new_orders.append(newsprout)
+    return new_orders
+
+
+def natural_selection(plantset, resultlist, rate):
+    resultlist, plantset = (list(x) for x in zip(
+        *sorted(zip(resultlist, plantset), key=lambda pair: pair[0])))
+    plantset = plantset[:rate]
+    resultlist = resultlist[:rate]
+    return plantset
+
+def alt_mutate_order(order, mutations):
+    currentmut = order
+    for _ in range(mutations):
+        i_1 = randint(0, len(order) - 1)
+        i_2 = randint(0, len(order) - 1)
+        while i_1 == i_2:
+            i_2 = randint(0, len(order) - 1)
+        wire_1 = currentmut[i_1]
+        wire_2 = currentmut[i_2]
+
+        mut_order = []
+        index = 0
+        while index < len(order):
+            if index == i_1:
+                mut_order.append(wire_2)
+            elif index == i_2:
+                mut_order.append(wire_1)
+            else:
+                mut_order.append(currentmut[index])
+
+            index += 1
+        currentmut = mut_order
+
+    return currentmut
+
+
+def PPA_data(net, maxdistance=8, generations=50, initialpopulation=200,
+                 survivalrate=30, minchildren=2, maxchildren=10):
+    complete_lengthlist = []
+    generationpoints = []
+    print('netlist', net)
+    p = ''
+
+    if net < 4:
+        p = 'print_1'
+    else:
+        p = 'print_2'
+
+    grid = eval("Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
+    grid.set_heat([], gv.heatdict[net])
+    orderlist = []
+    resultlist = []
+    returnlist = []
+    laidlist = []
+    shortest = 600000
+    wire_amount = len(grid.wires)
+    for i in range(initialpopulation):
+        shuffle(grid.wires)
+        order = []
+        for wire in grid.wires:
+            order.append(wire)
+            if order not in orderlist:
+                orderlist.append(order)
+    delList = []
+    for i in range(len(orderlist) - 1):
+        grid.reset()
+        grid.reserve_gates()
+        grid.wires = orderlist[i]
+        laid = a_star_heat(grid)
+        wire_length = total_length(grid.wires)
+        if wire_length<shortest and wire_amount == laid:
+            shortest = wire_length
+            print("netlist is:", net)
+            print("Wire_length", wire_length)
+            print(resultlist, orderlist)
+        if laid < wire_amount:
+            delList.append(i)
+        laidlist.append(laid)
+        complete_lengthlist.append(wire_length)
+        returnlist.append(shortest)
+        resultlist.append(wire_length)
+
+    delList.reverse()
+    for i in delList:
+        del resultlist[i]
+        del orderlist[i]
+        del laidlist[i]
+
+    currentplants = natural_selection(orderlist, resultlist, survivalrate)
+    for i in range(generations - 1):
+        generationpoints.append(len(complete_lengthlist))
+        newplants = []
+        newresults = []
+        for plant in currentplants:
+            newplants.append(plant)
+            rank = currentplants.index(plant)
+            temp_plants = sprout(plant, rank, maxdistance,
+                                     [minchildren, maxchildren, survivalrate])
+            for plant in temp_plants:
+                if plant not in newplants:
+                    newplants.append(plant)
+        delList = []
+        i = 0
+        for plant in newplants:
+            i += 1
+            grid.reset()
+            grid.reserve_gates()
+            grid.wires = plant
+            laid = a_star_heat(grid)
+            wirelength = total_length(grid.wires)
+            if wirelength < shortest and wire_amount == laid:
+                shortest = wirelength
+                print("netlist", net)
+                print("generation", i)
+                print(wirelength)
+                print()
+            laidlist.append(laid)
+            if laid < wire_amount:
+                delList.append(i)
+            returnlist.append(shortest)
+            newresults.append(wirelength)
+        for i in delList:
+            del newresults[i]
+            del newplants[i]
+            del complete_lengthlist[i+generationpoints[-1]]
+            del laidlist[i]
+
+        complete_lengthlist.extend(newresults)
+        generationpoints.append(len(complete_lengthlist))
+        currentplants = natural_selection(newplants, newresults,
+                                              survivalrate)
+    grid.reset()
+    grid.reserve_gates()
+    grid.wires = currentplants[0]
+    best_laid = a_star_heat(grid)
+    best_length = total_length(grid.wires)
+    return [returnlist, generationpoints, laidlist,
+                currentplants[0], best_length]
+
 
 #
 def file_to_list(file_name):
@@ -555,4 +726,4 @@ def file_to_list(file_name):
 
 # hill_heat('print_1', netlists.netlist_3, 10000)
 
-file_to_list('netlist_1_[\'helev\']repeats_is_4salt_is116.txt')
+#file_to_list('netlist_1_[\'helev\']repeats_is_4salt_is116.txt')

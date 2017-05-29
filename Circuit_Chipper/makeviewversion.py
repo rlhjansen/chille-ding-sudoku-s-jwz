@@ -10,7 +10,7 @@ import GL
 import plant_propagation as ppa
 import Elevator_hill as eh
 import Elevator as el
-import Astar_heat as Ash
+import Astar_heat as ash
 import matplotlib.pyplot as plt
 from random import randint
 
@@ -33,7 +33,13 @@ wireList = [[(0, 11, 1), (1, 11, 1), (1, 11, 2), (2, 11, 2), (2, 11, 3), (2, 10,
 
 gatesList = [(0, 1, 1), (0, 1, 6), (0, 1, 10), (0, 1, 15), (0, 2, 3), (0, 2, 12), (0, 2, 14), (0, 3, 12), (0, 4, 8), (0, 5, 1), (0, 5, 4), (0, 5, 11), (0, 5, 16), (0, 7, 13), (0, 7, 16), (0, 8, 2), (0, 8, 6), (0, 8, 9), (0, 8, 11), (0, 8, 15), (0, 9, 1), (0, 10, 2), (0, 10, 9), (0, 11, 1), (0, 11, 12)]
 
+def file_to_list(file_name):
+    file = open(file_name)
+    file.readline()
+    string = file.readline()[20:-2]
 
+    string = string.replace(',', '')
+    return string.split()
 
 Dimensions = [18,7,13]
 size = 0.1
@@ -679,7 +685,6 @@ def GetPointsCorner(corner, size, dimensions):
                 [size + coordx, -1 * size + coordy, size + coordz],
                 [1,5,7,3]]
 
-#########################################################
 def TurnToObject(List):
     glGenLists(1)
     glNewList(2, GL_COMPILE)
@@ -712,22 +717,6 @@ def TurnToObject(List):
     glEndList()
 
 
-def main(wireList, gatesList, size, dimensions):
-    List = makeUsableList(wireList)
-    completeWireList = []
-    for wire in List:
-        newWire = makeNewWire(wire, size, dimensions)
-        completeWireList.append(newWire)
-    completeWireList.sort(key=len)
-    print(completeWireList)
-    TurnToObject(completeWireList)
-    gates = makeUsableGateList(gatesList)
-    makegate(size)
-    while True:
-        draw(dimensions, gates)
-        get_input()
-
-
 def makeNewWire(wire, size, dimensions):
     newWire = []
     gatedirection = getDirection(wire[0],wire[1])
@@ -735,7 +724,8 @@ def makeNewWire(wire, size, dimensions):
     print(cornerList)
     #"""
     if len(cornerList) < 1:
-        GateGatePiece(wire[0], wire[-1], gatedirection, size, dimensions)
+        #pass
+        newWire.append(GateGatePiece(wire[0], wire[-1], gatedirection, size, dimensions))
     else:
         newWire.append(gateCornerPiece(wire[0], cornerList[0], gatedirection, size,
                             dimensions))
@@ -749,8 +739,8 @@ def makeNewWire(wire, size, dimensions):
     #"""
 
 # input examples
-# netlist_list = [2,4,3], average_.. = 5, methods = ["ppa","helev","decrmut"]
-def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True):
+# netlist_list = [2,4,3], average_.. = 5, methods = ["ppa","helev", "decrmut"], type = "elev" or "ash"
+def create_graph(netlist_list, average_over_X_repeats, methods, type, standardOn=True):
     salt = str(randint(0,20000000))
     for net in netlist_list:
         filename = "netlist_" + str(net) +"_" + str(methods) + "repeats_is_" + str(average_over_X_repeats) + "salt_is" + salt + ".png"
@@ -764,7 +754,7 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
         if "decrmut" in methods:
             decrmut_results = [None]*average_over_X_repeats
         for method in methods:
-            if method == "ppa":
+            if method == "ppa" and type == "elev":
                 #line length plot
                 for k in range(average_over_X_repeats):
                     print("repeat number", k, "of netlist", net)
@@ -832,7 +822,59 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
                 "the best length is: " + str(best_length) + "\n"
                 textfile.write(ppa_text)
 
-            if method == "helev":
+            if method == "ppa" and type == "ash":
+                #line length plot
+                for k in range(average_over_X_repeats):
+                    print("repeat number", k, "of netlist", net)
+                    ppa_results[k] = ash.PPA_data(net)
+                ppa_iteration_sizes = [0]*average_over_X_repeats
+                for k in range(average_over_X_repeats):
+                    ppa_iteration_sizes[k] = len(ppa_results[k][0])-1
+                ppa_average_lengths = [0]*min(ppa_iteration_sizes)
+                for k in range(average_over_X_repeats):
+                    for i in range(len(ppa_average_lengths)):
+                        ppa_average_lengths[i] += ppa_results[k][0][i]
+                ppa_iteration_sizes.sort()
+                for k in range(len(ppa_average_lengths)):
+                    print("ok")
+                    if k == ppa_iteration_sizes[0]:
+                        del ppa_iteration_sizes[0]
+                        print(ppa_iteration_sizes)
+                    ppa_average_lengths[k] = ppa_average_lengths[k]/len(ppa_iteration_sizes)
+                ax.plot(ppa_average_lengths, 'b')
+
+                # generation point plot
+                ppa_generation_amount = [0]*average_over_X_repeats
+                for k in range(average_over_X_repeats):
+                    ppa_generation_amount[k] = len(ppa_results[k][1])
+                ppa_average_generation_points = [0]*max(ppa_generation_amount)
+                for k in range(average_over_X_repeats):
+                    for i in range(len(ppa_results[k][1])-1):
+                        ppa_average_generation_points[i] += ppa_results[k][1][i]
+                for i in range(len(ppa_average_generation_points)-1):
+                    ppa_average_generation_points[i] = ppa_average_generation_points[i]/average_over_X_repeats
+                for xc in ppa_average_generation_points:
+                    ax.axvline(x=xc, color='g')
+
+                #data
+                best_lengths = []
+                for k in range(average_over_X_repeats):
+                    best_lengths.append(ppa_results[k][4])
+                best_orders = []
+                for k in range(average_over_X_repeats):
+                    best_orders.append(ppa_results[k][3])
+                #sort
+                best_lengths, best_orders = (list(x) for x in zip(
+                    *sorted(zip(best_lengths, best_orders),
+                            key=lambda pair: pair[0])))
+                best_order = best_orders[0]
+                best_length = best_lengths[0]
+                ppa_text = "for netlist " + str(net) + ", using the plant propagation algorithm, \n" + \
+                "the best order is: " + str(best_order) + "\n" + \
+                "the best length is: " + str(best_length) + "\n"
+                textfile.write(ppa_text)
+
+            if method == "hillclimber" and type == "elev":
                 for k in range(average_over_X_repeats):
                     helev_results[k] = eh.hill_climber_data(net)
                 # line length plot
@@ -885,6 +927,62 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
                            "the best height is: " + str(best_height) + "\n" + \
                            "the best length is: " + str(best_length) + "\n"
                 textfile.write(helev_text)
+
+
+            if method == "hillclimber" and type == "ash":
+                for k in range(average_over_X_repeats):
+                    helev_results[k] = ash.hill_climber_data(net)
+                # line length plot
+                iteration_amount = len(helev_results[0][0])-1
+                helev_average_lengths = [0]*iteration_amount
+                for k in range(average_over_X_repeats):
+                    for i in range(len(helev_results[k][0]) - 1):
+                        helev_average_lengths[i] += helev_results[k][0][i]
+                for k in range(len(helev_average_lengths)):
+                    helev_average_lengths[k] = helev_average_lengths[k] / average_over_X_repeats
+                ax.plot(helev_average_lengths)
+
+
+                # earliest/average first constraint satisfaction
+                first_constraint_satisfaction_list = []
+                for k in range(average_over_X_repeats):
+                    first_constraint_satisfaction_list.append(
+                        helev_results[k][1])
+                # for earliest use min(...), for average use sum(...)/average_over..
+                #ax.axhline(sum(
+                #    first_constraint_satisfaction_list) / average_over_X_repeats,
+                #            color='g')
+
+                # data possibilities
+                best_heights = []
+                for k in range(average_over_X_repeats):
+                    best_heights.append(helev_results[k][3])
+                best_lengths = []
+                for k in range(average_over_X_repeats):
+                    best_lengths.append(helev_results[k][4])
+                best_orders = []
+                for k in range(average_over_X_repeats):
+                    best_orders.append(helev_results[k][2])
+                combined_height_order = []
+                for k in range(average_over_X_repeats):
+                    combined_height_order.append(
+                        [best_heights[k], best_orders[k]])
+                # sort
+                best_lengths, combined_height_order = (list(x) for x in zip(
+                    *sorted(zip(best_lengths, combined_height_order),
+                            key=lambda pair: pair[0])))
+                helev_first_csa = min(first_constraint_satisfaction_list)
+                best_height = combined_height_order[0][0]
+                best_order = combined_height_order[0][1]
+                best_length = best_lengths[0]
+                helev_text = "for netlist " + str(
+                    net) + ", using the hillclimber algorithm, the constraint was first satisfied at " + str(
+                    helev_first_csa) + "\n" + \
+                           "the best order is: " + str(best_order) + "\n" + \
+                           "the best height is: " + str(best_height) + "\n" + \
+                           "the best length is: " + str(best_length) + "\n"
+                textfile.write(helev_text)
+
 
             if method == "decrmut":
                 for k in range(average_over_X_repeats):
@@ -972,23 +1070,52 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
 
 
 def TextToWireList(filename, main_algorithm, net):
-    info_file = open(filename, 'r')
     print('netlist', net)
     p = ''
     if net < 4:
         p = 'print_1'
     else:
         p = 'print_2'
-
+    wire_order_string_ver = file_to_list(filename)
     if main_algorithm == "elev":
-        grid = eval("Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
+        eh.grid = eval("eh.Grid(\'" + p + "\', eh.netlists.netlist_" + str(net) + ")")
     elif main_algorithm == "A*Heat":
-        grid = eval("AstarH.Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
+        ash.grid = eval("ash.Grid(\'" + p + "\', ash.netlists.netlist_" + str(net) + ")")
         heatlist = global_variables.heatdict[net]
         ash.grid.set_heat(heatlist)
+    wire_order_object_ver = []
+    for string in wire_order_string_ver:
+        if main_algorithm == "elev":
+            for wire in eh.grid.wires:
+                if string == wire.name:
+                    wire_order_object_ver.append(wire)
+                    break
+        if main_algorithm == "A*Heat":
+            for wire in ash.grid.wires:
+                if string == wire.name:
+                    wire_order_object_ver.append(wire)
+                    break
+    if main_algorithm == "elev":
+        eh.grid.wires = wire_order_object_ver
+        eh.grid.reset()
+        eh.grid.reserve_gates()
+        eh.elevator(eh.grid)
+        gatelist = []
+        for gate in eh.grid.gates:
+            gatelist.append(gate.coordinate)
+        return [eh.grid.all_coord(), gatelist, [eh.grid.x, eh.grid.z, eh.grid.y]]
+    elif main_algorithm == "A*Heat":
+        ash.a_star_heat(ash.grid)
+        ash.grid.wires = wire_order_object_ver
+        ash.grid.reset()
+        ash.grid.reserve_gates()
+        ash.a_star_heat(ash.grid)
+        gatelist = []
+        for gate in ash.grid.gates:
+            gatelist.append(gate.coordinate)
+        return [ash.grid.all_coord(), gatelist, [ash.grid.x, ash.grid.z, ash.grid.y]]
 
 
-#main(wireList, gatesList, size, Dimensions)
 
 #ppa.PPA_graph([2])
 
@@ -1001,4 +1128,24 @@ def TextToWireList(filename, main_algorithm, net):
 # standardOn=True geeft een horizontale lijn van het resultaat uit jochem's algoritme
 # don't forget: meerdere methods geeft een zooi.
 
-create_graph([6], 4, ["decrmut"], standardOn=True)
+def main(filename, main_algorithm, net, size):
+    [wireList, gatesList, dimensions] = TextToWireList(filename, main_algorithm, net)
+    List = makeUsableList(wireList)
+    completeWireList = []
+    for wire in List:
+        newWire = makeNewWire(wire, size, dimensions)
+        completeWireList.append(newWire)
+    completeWireList.sort(key=len)
+    print(completeWireList)
+    TurnToObject(completeWireList)
+    gates = makeUsableGateList(gatesList)
+    makegate(size)
+    while True:
+        draw(dimensions, gates)
+        get_input()
+
+#create_graph([6], 4, ["decrmut"], standardOn=True)
+
+#main("netlist_1_['ppa']repeats_is_4salt_is5312324.txt", "elev", 1, size)
+
+#print(TextToWireList("netlist_1_['ppa']repeats_is_4salt_is5312324.txt", "elev", 1))

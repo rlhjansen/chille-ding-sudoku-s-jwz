@@ -321,7 +321,6 @@ def sprout(order, rank, maxdistance, survivestats):
                 if mutations >maxdistance:
                     break
                 #print("haha andersom gefokt")
-            print("finish whiles")
             mutationlist.append(mutations)
     for mutation in mutationlist:
         if mutation < 0:
@@ -329,7 +328,6 @@ def sprout(order, rank, maxdistance, survivestats):
         if mutation > maxdistance:
             mutation = maxdistance
         newsprout = alt_mutate_order(order, mutation)
-        print("haha gemuteerde bitch")
         new_orders.append(newsprout)
     return new_orders
 
@@ -935,7 +933,9 @@ def PPA_data(net, maxdistance=8, generations=50, initialpopulation=200,
                 if plant not in newplants:
                     newplants.append(plant)
         delList = []
+        i = 0
         for plant in newplants:
+            i += 1
             grid.reset()
             grid.reserve_gates()
             grid.wires = plant
