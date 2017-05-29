@@ -10,6 +10,7 @@ import GL
 import plant_propagation as ppa
 import Elevator_hill as eh
 import Elevator as el
+import Astar_heat as Ash
 import matplotlib.pyplot as plt
 from random import randint
 
@@ -970,6 +971,22 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
         fig.savefig(filename)
 
 
+def TextToWireList(filename, main_algorithm, net):
+    info_file = open(filename, 'r')
+    print('netlist', net)
+    p = ''
+    if net < 4:
+        p = 'print_1'
+    else:
+        p = 'print_2'
+
+    if main_algorithm == "elev":
+        grid = eval("Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
+    elif main_algorithm == "A*Heat":
+        grid = eval("AstarH.Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
+        heatlist = global_variables.heatdict[net]
+        ash.grid.set_heat(heatlist)
+
 
 #main(wireList, gatesList, size, Dimensions)
 
@@ -984,3 +1001,5 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
 # standardOn=True geeft een horizontale lijn van het resultaat uit jochem's algoritme
 # don't forget: meerdere methods geeft een zooi.
 create_graph([6], 4, ["decrmut"], standardOn=True)
+
+

@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from statistics import mean
 from statistics import variance
 import Astar_heat as AstarH
+import global_variables
 
 
 
@@ -879,17 +880,12 @@ def randomn_orders_data(net, num_of_randoms=5000, methodstring):
         grid = eval("Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
     elif methodstring == "A*Heat":
         grid = eval("AstarH.Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
-        heatdict = {1:(0,2), \
-                    2:(0,0,2), \
-                    3:value, \   # needs checking
-                    4:value, \
-                    5:value, \
-                    6:value}
-        heatlist = heatdict[net]
+        heatlist = global_variables.heatdict[net]
         grid.set_heat(0,heatlist)
     orderlist = [None] * num_of_randoms
     resultlist = [None] * num_of_randoms
     height_resultlist = [None] * num_of_randoms
+    laid_resultlist = [None] * num_of_randoms
     for i in range(num_of_randoms):
         orderlist[i] = shuffle(grid.wires)
     for i in range(num_of_randoms):
@@ -899,23 +895,33 @@ def randomn_orders_data(net, num_of_randoms=5000, methodstring):
             grid.wires = orderlist[i]
             height = elevator(grid)
             resultlist[i] = total_length(grid.wires)
+            height_resultlist[i] = height
         elif methodstring == "A*Heat":
             AstarH.grid.reset()
             AstarH.grid.reserve_gates()
             AstarH.grid.wires = orderlist[i]
-            height = AstarH.a_star_heat(grid)
+            laid_resultlist[i] = AstarH.a_star_heat(grid)
             resultlist[i] = AstarH.total_length(grid.wires)
-        height_resultlist[i] = height
     random_mean = mean(resultlist)
     random_variance = variance(resultlist)
     random_height_mean = mean(height_resultlist)
-    text = "netlist is " + str(net) + "\n" + \
+    if methodstring == "elev":
+        text = "netlist is " + str(net) + "\n" + \
         "mean length is " + str(random_mean) + "\n" + \
         "mean height is " + str(random_height_mean) + "\n" + \
         "length variance is" + str(random_variance) + "\n"
+    elif methodstring == "A*Heat":
+        laid_mean = mean(laid_resultlist)
+        text = "netlist is " + str(net) + "\n" + \
+        "mean length is " + str(random_mean) + "\n" + \
+        "mean amount layed is " + str(laid_mean) + "\n" + \
+        "length variance is" + str(random_variance) + "\n"
     writefile.write(text)
     writefile.close()
-    return [random_mean, random_variance, random_height_mean]
+    if methodstring == "elev":
+        return [random_mean, random_variance, random_height_mean]
+    elif methodstring == "A*Heat":
+        return [random_mean, random_variance, laid_mean]
 
 
 #decreasing_shuffle_climber(6, 200, 40, 2, 12)
