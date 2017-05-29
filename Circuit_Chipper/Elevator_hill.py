@@ -803,6 +803,7 @@ def decreasing_mutations(net, batchsize=540, survivesize=90, shuffle_decrement=1
     print()
     return [shortlist, generationlist, height_is_satisfied, orderlist[0], best_height, best_length]
 
+
 def hill_climber_data(net, repeats=5000):
     complete_lengthlist = []
     height_is_satisfied = 0

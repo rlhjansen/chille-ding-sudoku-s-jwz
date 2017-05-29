@@ -22,14 +22,17 @@ class Grid:
 
             self.gates.append(gate)
             gate.add_heat(Gate.heat)
+        self.gates = sorted(self.gates, key=lambda gate: gate.busyness(), reverse=True)
 
-    def reset(self):
+    def reset(self, reserve=False):
         Wire.num = 0
         Wire.layed = 0
         Gate.num = 0
 
         for wire in self.wires:
             wire.remove()
+        if reserve:
+            self.reserve_gates()
 
     def set_nodes(self, print_n):
         nodes = {}
@@ -81,6 +84,11 @@ class Grid:
             self.nodes[connection[1]].gets(wire)
 
         return wires
+
+    def reserve_gates(self):
+        for gate in self.gates:
+            for wire in gate.busy:
+                lift(wire, 0, init=True)
 
     def set_heat(self, w, g):
         old_heat = Gate.heat
@@ -375,35 +383,34 @@ class Gate(Node):
 #
 def a_star_all(wires):
     layed = 0
+    not_layed = []
 
     for wire in wires:
+        wire.remove()
         route = wire.a_star()
 
-        if route:
+        if route != False:
             layed += 1
             wire.lay(route)
+        else:
+            not_layed.append(wire)
 
-    return layed
+    return layed, not_layed
 
 
 #
 def mutate_heat(heat_list):
     new_list = list(heat_list)
-    for heat in heat_list:
-        new_list.append(heat)
 
-    mut = rn.randint(0, 3)
+    mut = rn.randint(0, 2)
     if new_list == [] or mut == 0:
-        new_list.append(rn.randint(0, 20))
+        new_heat = rn.randint(0, 20)
+        new_list.append(new_heat)
     elif mut == 1:
-        new_list.pop()
+        del new_list[-1]
     elif mut == 2:
-        i_1 = rn.randrange(0, len(heat_list))
-        i_2 = rn.randrange(0, len(heat_list))
-        value_1 = heat_list[i_1]
-        value_2 = heat_list[i_2]
-        new_list[i_1] = value_2
-        new_list[i_2] = value_1
+        index = rn.randrange(0, len(heat_list))
+        new_list[index] = rn.randint(0, 20)
 
     return tuple(new_list)
 
@@ -411,6 +418,8 @@ def mutate_heat(heat_list):
 #
 def hill_heat(print_n, netlist, iterations):
     grid = Grid(print_n, netlist)
+    rn.shuffle(grid.wires)
+    grid.reserve_gates()
     best_heat = ()
     best_layed = 0
     past_heats = set(best_heat)
@@ -421,25 +430,88 @@ def hill_heat(print_n, netlist, iterations):
             new_heat = mutate_heat(new_heat)
 
         grid.set_heat([], new_heat)
-        new_layed = a_star_all(grid.wires)
+
+        layed = a_star_all(grid.wires)
+        new_layed = layed[0]
         past_heats.add(new_heat)
 
-        if new_layed >= best_layed:
+        if layed[1] and new_layed >= best_layed:
+            best_layed = new_layed
+            best_heat = new_heat
+            print('better layed:', new_layed)
+            print('not layed:', layed[1])
+            print('new heat:', best_heat)
+
+        elif layed[1] == [] and (len(new_heat) < len(best_heat) or
+            (sum(new_heat) <= sum(best_heat) and
+             len(new_heat) <= len(best_heat))):
+
             best_layed = new_layed
             best_heat = new_heat
             print('better layed:', new_layed)
             print('new heat:', best_heat)
 
-        grid.reset()
+        grid.reset(reserve=True)
 
     print('best_layed =', best_layed)
     print('best heat =', best_heat)
     return best_heat
 
 
-hill_heat('print_1', netlists.netlist_1, 100)
+#
+def lift(wire, height, init=False):
+    wire.remove()
+    total_path = []
+    start_end = []
+
+    for gate in [wire.start, wire.end]:
+        start_nodes = gate.neighbours(empty=True, init=init)
+        pointer = start_nodes[0].coordinate
+        path = [pointer]
+
+        for i in range(0, height):
+            if path[0][0] != i + 1:
+                path.append((i + 1, pointer[1], pointer[2]))
+
+        start_end.append(path[-1])
+        total_path += path
+
+    wire.lay(total_path)
+    return start_end
+
+
+#
+def total_length(wires):
+    length = 0
+
+    for wire in wires:
+        length += len(wire.coordinates)
+
+    return length
+
+
+#
+def a_star_heat(grid):
+    not_layed = 0
+
+    for wire in grid.wires:
+        wire.remove()
+        route = wire.a_star()
+
+        if route == False:
+            not_layed += 1
+        else:
+            wire.lay(route)
+
+    return not_layed
+
+
+hill_heat('print_1', netlists.netlist_3, 10000)
 
 if False:
-    grid = Grid('print_3', netlists.netlist_1)
-    grid.set_heat([], [9, 1])
+    grid = Grid('print_2', netlists.netlist_4)
+    grid.set_heat([], [0, 0, 1])
     grid.print(heat=True)
+    grid.reserve_gates()
+    print(a_star_all(grid.wires))
+    grid.print()

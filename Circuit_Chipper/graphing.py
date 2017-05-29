@@ -241,4 +241,4 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
 # decrmut = decreasing mutations
 # standardOn=True geeft een horizontale lijn van het resultaat uit jochem's algoritme
 # don't forget: meerdere methods geeft een zooi.
-create_graph([6], 4, ["helev"], standardOn=True)
+create_graph([2], 4, ["helev"], standardOn=True)
