@@ -1,13 +1,11 @@
 #
 #
-#
 
 import netlists
 import queue as Q
-import random
-from random import shuffle
 
 
+# This keeps track of where, which object is placed on the chip.
 class Grid:
     def __init__(self, print_n, netlist):
         self.x = 0
@@ -22,6 +20,7 @@ class Grid:
             self.gates.append(self.nodes[i + 1])
         self.reserve_gates()
 
+    # Clean a grid for repeated use.
     def reset(self):
         Wire.num = 0
         Wire.layed = 0
@@ -30,6 +29,7 @@ class Grid:
         for wire in self.wires:
             wire.remove()
 
+    # Part of init. Make all nodes and make all gates.
     def set_nodes(self, print_n):
         nodes = {}
 
@@ -65,6 +65,7 @@ class Grid:
         file.close()
         return nodes
 
+    # Part of init. Make all wires.
     def set_wires(self, netlist):
         wires = []
         for connection in netlist:
@@ -81,6 +82,7 @@ class Grid:
 
         return wires
 
+    # Lay parts of wires near gates they must connect.
     def reserve_gates(self):
         gates = sorted(self.gates, key=lambda gate: gate.busyness(), reverse=True)
 
@@ -88,6 +90,7 @@ class Grid:
             for wire in gate.busy:
                 lift(wire, 0, init=True)
 
+    # Show the content of all nodes.
     def print(self, z_layer=False):
         print_grid = [[[self.nodes[(z, y, x)].objects
                         for x in range(self.x)]
@@ -107,7 +110,7 @@ class Grid:
                 print()
 
 
-#
+# These connect gates. They may not intersect each other.
 class Wire:
     num = 0
     layed = 0
@@ -124,6 +127,7 @@ class Wire:
     def __repr__(self):
         return self.name
 
+    # Put a wire on the grid.
     def lay(self, coordinates):
         Wire.layed += 1
         nodes = self.grid.nodes
@@ -135,6 +139,7 @@ class Wire:
 
         self.coordinates = coordinates
 
+    # Remove a wire from the grid.
     def remove(self):
         nodes = self.grid.nodes
 
@@ -143,6 +148,7 @@ class Wire:
 
         self.coordinates = []
 
+    # Return the length of a path without obstacles.
     def man_dis(self, start=False, end=False):
         if type(start) == Node or type(start) == Gate:
             start = start.coordinate
@@ -161,6 +167,7 @@ class Wire:
 
         return man_distance
 
+    # Return the route of a wire. Return 'False' if no route is possible.
     def a_star(self, lay=False, y=False, start=False, end=False, turn=False):
         if type(end) == tuple:
             end = self.grid.nodes[end]
@@ -201,6 +208,7 @@ class Wire:
             self.lay(path[2:-1])
         return path[2:-1]
 
+    # How 'expensive' is it to lay this wire using a-star.
     def a_star_cost(self, y=False, length=True, start=False, end=False):
         cost = len(self.start.neighbours(gates=True, end=self.end))\
                + len(self.end.neighbours(gates=True, end=self.start))
@@ -209,6 +217,7 @@ class Wire:
         if not path:
             return 1000
 
+        # Cost = len(path) + len(nodes near path)
         for coordinate in path:
             node = self.grid.nodes[coordinate]
             cost += len(node.neighbours(gates=True))
@@ -218,7 +227,7 @@ class Wire:
         return cost
 
 
-#
+# One vertex on the grid. It can contain wires.
 class Node:
     def __init__(self, coordinate, grid):
         self.objects = []
@@ -235,6 +244,8 @@ class Node:
     def remove(self, obj):
         self.objects.remove(obj)
 
+    # Return all nodes neighbouring this one. You can specify which kind of
+    # neighbours to return.
     def neighbours(self, gates=False, end=False, empty=False, wire=False, wires=False, init=False):
         if type(end) == tuple:
             end = self.grid.nodes[end]
@@ -276,7 +287,7 @@ class Node:
         return neighbour
 
 
-#
+# Gates are special nodes that are connected with each other by wires.
 class Gate(Node):
     num = 0
     heat = 0
@@ -292,14 +303,16 @@ class Gate(Node):
     def __repr__(self):
         return self.name
 
+    # Tell a gate which wire is used to connect it.
     def gets(self, wire):
         self.busy.append(wire)
 
+    # Return how crowded a gate is/will be.
     def busyness(self):
         return len(self.busy) + len(self.neighbours(gates=True))
 
 
-#
+# Return all wires that don't already connect two gates on the grid.
 def wires_to_lay(layed_wires, grid):
     to_lay = []
 
@@ -310,7 +323,7 @@ def wires_to_lay(layed_wires, grid):
     return to_lay
 
 
-#
+# Check if a wire makes a turn. Return 1 if it did, 0 if it didn't.
 def turn_penalty(coordinates, pointer, kost=2):
     if len(coordinates) < 4:
         return 0
@@ -338,7 +351,7 @@ def turn_penalty(coordinates, pointer, kost=2):
     return 0
 
 
-#
+# Extend all unlayed wires from their gates to a given height.
 def lift(wire, height, init=False):
     wire.remove()
     total_path = []
@@ -360,7 +373,7 @@ def lift(wire, height, init=False):
     return start_end
 
 
-#
+# Connect all gates using the elevator method.
 def elevator(grid, show=False):
     height = -1
     layed = []
@@ -369,11 +382,13 @@ def elevator(grid, show=False):
     while len(layed) < len(grid.wires) and height < grid.z - 1:
         height += 1
 
+        # Lift all wires to the specified height.
         for wire in wires_to_lay(layed, grid):
             wire.remove()
             start_end = lift(wire, height)
             can_lay.append((wire, start_end[0], start_end[1]))
 
+        # Try to lay each wire a-star without laying higher than the height.
         while can_lay:
             can_lay.sort(key=lambda wire_set: (wire_set[0].a_star_cost(y=height, start=wire_set[1], end=wire_set[2]), wire_set[0].man_dis()), reverse=True)
             wire_set = can_lay.pop()
@@ -395,7 +410,7 @@ def elevator(grid, show=False):
     return height + 1
 
 
-#
+# Calculate the sum of shortest possible routes from the wires.
 def total_manhat(wires):
     length = 0
 
@@ -405,7 +420,7 @@ def total_manhat(wires):
     return length
 
 
-#
+# Return the number of nodes that are occupied by the wires.
 def total_length(wires):
     length = 0
 
