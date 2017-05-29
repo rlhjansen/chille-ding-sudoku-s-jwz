@@ -301,6 +301,21 @@ class Grid:
 
         return length
 
+    # Returns a list in which all the routes of all wires are.
+    def all_coord(self):
+        all_coords = []
+
+        for wire in self.wires:
+            coords = []
+
+            coords.append(wire.start.coordinate)
+            coords += wire.coordinates
+            coords.append(wire.end.coordinate)
+
+            all_coords.append(coords)
+
+        return all_coords
+
 
 # These nodes are data points that store wires, gates and the heat.
 class Node:

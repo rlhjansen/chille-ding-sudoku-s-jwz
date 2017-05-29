@@ -134,6 +134,21 @@ class Grid:
                     print(row)
                 print()
 
+    # Returns a list in which all the routes of all wires are.
+    def all_coord(self):
+        all_coords = []
+
+        for wire in self.wires:
+            coords = []
+
+            coords.append(wire.start.coordinate)
+            coords += wire.coordinates
+            coords.append(wire.end.coordinate)
+
+            all_coords.append(coords)
+
+        return all_coords
+
 
 # These connect gates. They may not intersect each other.
 class Wire:
@@ -528,4 +543,16 @@ def a_star_heat(grid):
     return num_layed
 
 
-hill_heat('print_1', netlists.netlist_3, 10000)
+#
+def file_to_list(file_name):
+    file = open(file_name)
+    file.readline()
+    string = file.readline()[20:-2]
+
+    string = string.replace(',', '')
+    return string.split()
+
+
+# hill_heat('print_1', netlists.netlist_3, 10000)
+
+file_to_list('netlist_1_[\'helev\']repeats_is_4salt_is116.txt')

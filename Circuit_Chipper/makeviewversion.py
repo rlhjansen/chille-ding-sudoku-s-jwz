@@ -1000,6 +1000,5 @@ def TextToWireList(filename, main_algorithm, net):
 # decrmut = decreasing mutations
 # standardOn=True geeft een horizontale lijn van het resultaat uit jochem's algoritme
 # don't forget: meerdere methods geeft een zooi.
+
 create_graph([6], 4, ["decrmut"], standardOn=True)
-
-
