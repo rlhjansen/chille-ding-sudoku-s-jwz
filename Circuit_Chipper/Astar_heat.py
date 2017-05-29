@@ -1,12 +1,13 @@
-#
-#
-#
+# This program tries to solve the chip by generating heat around gates. The
+# wires that are layed will try to avoid the heat and thus, avoid gates. This
+# way, gates can't become too crowded.
 
 import netlists
 import queue as Q
 import random as rn
 
 
+# This keeps track of where, which object is placed on the chip.
 class Grid:
     def __init__(self, print_n, netlist):
         self.x = 0
@@ -24,6 +25,7 @@ class Grid:
             gate.add_heat(Gate.heat)
         self.gates = sorted(self.gates, key=lambda gate: gate.busyness(), reverse=True)
 
+    # Clean a grid for repeated use.
     def reset(self, reserve=False):
         Wire.num = 0
         Wire.layed = 0
@@ -34,6 +36,7 @@ class Grid:
         if reserve:
             self.reserve_gates()
 
+    # Part of init. Make all nodes and make all gates.
     def set_nodes(self, print_n):
         nodes = {}
 
@@ -69,6 +72,7 @@ class Grid:
         file.close()
         return nodes
 
+    # Part of init. Make all wires and tell which gates they will connect.
     def set_wires(self, netlist):
         wires = []
         for connection in netlist:
@@ -85,11 +89,13 @@ class Grid:
 
         return wires
 
+    # Lay parts of wires near gates they must connect.
     def reserve_gates(self):
         for gate in self.gates:
             for wire in gate.busy:
                 lift(wire, 0, init=True)
 
+    # set the heat for all the gates and wires.
     def set_heat(self, w, g):
         old_heat = Gate.heat
 
@@ -100,6 +106,7 @@ class Grid:
             gate.remove_heat(old_heat)
             gate.add_heat(g)
 
+    # Show the content of all nodes.
     def print(self, z_layer=False, heat=False):
         print_grid = []
 
@@ -128,7 +135,7 @@ class Grid:
                 print()
 
 
-#
+# These connect gates. They may not intersect each other.
 class Wire:
     num = 0
     layed = 0
@@ -145,6 +152,7 @@ class Wire:
     def __repr__(self):
         return self.name
 
+    # Put the wire on the grid.
     def lay(self, coordinates):
         Wire.layed += 1
         nodes = self.grid.nodes
@@ -158,6 +166,7 @@ class Wire:
 
         self.coordinates = coordinates
 
+    # Remove the wire from the grid.
     def remove(self):
         nodes = self.grid.nodes
 
@@ -167,6 +176,7 @@ class Wire:
 
         self.coordinates = []
 
+    # Return the length of a path without obstacles.
     def man_dis(self, start=False, end=False):
         if type(start) == Node or type(start) == Gate:
             start = start.coordinate
@@ -185,6 +195,7 @@ class Wire:
 
         return man_distance
 
+    # Return the route of a wire. Return 'False' if no route is possible.
     def a_star(self, y=False, start=False, end=False):
         if type(end) == tuple:
             end = self.grid.nodes[end]
@@ -222,6 +233,7 @@ class Wire:
 
         return path[3:-1]
 
+    # How 'expensive' is it to lay this wire using a-star.
     def a_star_cost(self, y=False, length=True, start=False, end=False):
         cost = len(self.start.neighbours(gates=True, end=self.end))\
                + len(self.end.neighbours(gates=True, end=self.start))
@@ -230,6 +242,7 @@ class Wire:
         if not path:
             return 1000
 
+        # cost = len(path) + len(nodes_near_path)
         for coordinate in path:
             node = self.grid.nodes[coordinate]
             cost += len(node.neighbours(gates=True))
@@ -239,7 +252,7 @@ class Wire:
         return cost
 
 
-#
+# One vertex on the grid. It can contain wires and heat.
 class Node:
     def __init__(self, coordinate, grid):
         self.objects = []
@@ -256,6 +269,8 @@ class Node:
     def remove(self, obj):
         self.objects.remove(obj)
 
+    # Return all nodes neighbouring this one. You can specify which kind of
+    # neighbours to return.
     def neighbours(self, gates=False, end=False, empty=False, wire=False, wires=False, init=False):
         if type(end) == tuple:
             end = self.grid.nodes[end]
@@ -296,6 +311,7 @@ class Node:
 
         return neighbour
 
+    # Create a sphere of heat around a node. Heat can come from wires or gates.
     def add_heat(self, heat_list):
         last_nodes = [list(self.coordinate)]
         directions = [[1, 0, 0], [-1, 0, 0], [0, 1, 0],
@@ -326,6 +342,7 @@ class Node:
 
             last_nodes = next_nodes
 
+    # Does the exact opposite of 'add_heat'
     def remove_heat(self, heat_list):
         last_nodes = [list(self.coordinate)]
         directions = [[1, 0, 0], [-1, 0, 0], [0, 1, 0],
@@ -357,7 +374,7 @@ class Node:
             last_nodes = next_nodes
 
 
-#
+# Gates are special nodes that are connected with each other by wires.
 class Gate(Node):
     num = 0
     heat = []
@@ -373,14 +390,16 @@ class Gate(Node):
     def __repr__(self):
         return self.name
 
+    # Tell a gate which wire is used to connect it.
     def gets(self, wire):
         self.busy.append(wire)
 
+    # Return how crowded a gate is/will be.
     def busyness(self):
         return len(self.busy) + len(self.neighbours(gates=True))
 
 
-#
+# Try to lay all the wires using a-star. Return how many were layed.
 def a_star_all(wires):
     layed = 0
     not_layed = []
@@ -437,7 +456,7 @@ def hill_heat(print_n, netlist, iterations):
         new_layed = layed[0]
         past_heats.add(new_heat)
 
-        #
+        # Check if the new heat is lower than the best.
         if layed[1] and new_layed >= best_layed:
             best_layed = new_layed
             best_heat = new_heat
@@ -445,6 +464,7 @@ def hill_heat(print_n, netlist, iterations):
             print('not layed:', layed[1])
             print('new heat:', best_heat)
 
+        # Try to simplify the heat if the netlist is solved.
         elif layed[1] == [] and (len(new_heat) < len(best_heat) or
             (sum(new_heat) <= sum(best_heat) and
              len(new_heat) <= len(best_heat))):
@@ -461,7 +481,7 @@ def hill_heat(print_n, netlist, iterations):
     return best_heat
 
 
-#
+# Extend all unlayed wires from their gates to a given height.
 def lift(wire, height, init=False):
     wire.remove()
     total_path = []
@@ -483,7 +503,7 @@ def lift(wire, height, init=False):
     return start_end
 
 
-#
+# Return the number of nodes that are occupied by the wires.
 def total_length(wires):
     length = 0
 
@@ -493,7 +513,7 @@ def total_length(wires):
     return length
 
 
-#
+# Try to lay all the wires using a-star. Return how many were layed.
 def a_star_heat(grid):
     num_layed = 0
 
@@ -509,11 +529,3 @@ def a_star_heat(grid):
 
 
 hill_heat('print_1', netlists.netlist_3, 10000)
-
-if False:
-    grid = Grid('print_2', netlists.netlist_4)
-    grid.set_heat([], [0, 0, 1])
-    grid.print(heat=True)
-    grid.reserve_gates()
-    print(a_star_all(grid.wires))
-    grid.print()
