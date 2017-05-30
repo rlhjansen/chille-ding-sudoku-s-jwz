@@ -756,6 +756,7 @@ def create_graph(netlist_list, average_over_X_repeats, methods, type, standardOn
         if "hill" in methods and "ash" in type:
             ashclimber_results = [None]*average_over_X_repeats
         for method in methods:
+            print("test")
             if method == "ppa" and type == "elev":
                 #line length plot
                 for k in range(average_over_X_repeats):
@@ -823,9 +824,10 @@ def create_graph(netlist_list, average_over_X_repeats, methods, type, standardOn
                 "the best height is: " + str(best_height) + "\n" + \
                 "the best length is: " + str(best_length) + "\n"
                 textfile.write(ppa_text)
-
+            print("test")
             if method == "ppa" and type == "ash":
                 #line length plot
+                print("ok")
                 for k in range(average_over_X_repeats):
                     print("repeat number", k, "of netlist", net)
                     ppa_results[k] = ash.PPA_data(net)
@@ -1137,7 +1139,7 @@ def main(filename, main_algorithm, net, size):
         get_input()
 
 # netlist_list = [2,4,3], average_.. = 5, methods = ["ppa","hill", "decrmut"], type = "elev" or "ash"
-create_graph([1], 4, ["ppa"],"ash")
+create_graph([1], 4, ["ppa"], "ash")
 
 #main("netlist_1_['ppa']repeats_is_4salt_is5312324.txt", "elev", 1, size)
 

@@ -501,7 +501,7 @@ def hill_heat(print_n, netlist, iterations):
             print('better layed:', new_layed)
             print('new heat:', best_heat)
 
-        else:
+        elif new_layed == best_layed:
             print(new_layed, 'meh', new_heat)
 
     print('best_layed =', best_layed)
@@ -576,6 +576,7 @@ def a_star_heat(grid):
 
     return num_layed
 
+
 # survivestats = [min, max, rate]
 def sprout(order, rank, maxdistance, survivestats):
     positional_chance = ((survivestats[2] - rank+1) / (survivestats[2]+1))*4/5+0.1
@@ -614,6 +615,7 @@ def natural_selection(plantset, resultlist, rate):
     plantset = plantset[:rate]
     resultlist = resultlist[:rate]
     return plantset
+
 
 def alt_mutate_order(order, mutations):
     currentmut = order
@@ -823,8 +825,6 @@ def hill_climber_data(net, repeats=5000):
     return [complete_lengthlist, best_order, best_length]
 
 
-
-
 # Find the wire order form a file and turn it into a list of wire names.
 def file_to_list(file_name):
     file = open(file_name)
@@ -845,7 +845,7 @@ def success(print_n, net, heat):
         grid.reserve_gates()
         grid.set_heat([], heat)
 
-        if not a_star_heat(grid)[1]:
+        if not a_star_heat_v2(grid)[1]:
             percentage += 1
 
         grid.reset(reserve=True)
@@ -853,7 +853,6 @@ def success(print_n, net, heat):
     print('heat', heat, 'has a succes of', str(percentage) + '%')
 
 
-#if False:
-#    success('print_1', netlists.netlist_1, [0, 3])
-#else:
-#    hill_heat('print_1', netlists.netlist_2, 10000)
+if False:
+    success('print_1', netlists.netlist_2, [0, 0, 7])
+    hill_heat('print_1', netlists.netlist_4, 10000)

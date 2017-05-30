@@ -1,36 +1,40 @@
 import plant_propagation as ppa
 import Elevator_hill as eh
 import Elevator as el
+import Astar_heat as ash
 import matplotlib.pyplot as plt
 from random import randint
 
 # input examples
-# netlist_list = [2,4,3], average_.. = 5, methods = ["ppa","helev","decrmut"]
-def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True):
-    salt = str(randint(0,200))
+# netlist_list = [2,4,3], average_.. = 5, methods = ["ppa","hill", "decrmut"], type = "elev" or "ash"
+def create_graph(netlist_list, average_over_X_repeats, methods, type, standardOn=True):
+    salt = str(randint(0,20000000))
     for net in netlist_list:
-        filename = "netlist_" + str(net) +"_" + str(methods) + "repeats_is_" + str(average_over_X_repeats) + "salt_is" + salt + ".png"
-        textfilename = "netlist_" + str(net) +"_" + str(methods) + "repeats_is_" + str(average_over_X_repeats) + "salt_is" + str(randint(0, 200)) + ".txt"
+        filename = "netlist_" + str(net) +"_" + str(methods) + str(type) + "repeats_is_" + str(average_over_X_repeats) + "salt_is" + salt + ".png"
+        textfilename = "netlist_" + str(net) +"_" + str(methods) + str(type) + "repeats_is_" + str(average_over_X_repeats) + "salt_is" + salt + ".txt"
         textfile = open(textfilename, 'w')
         fig, ax = plt.subplots()
-        if "ppa" in methods:
+        if "ppa" in methods and "elev" in type:
             ppa_results = [None]*average_over_X_repeats
-        if "helev" in methods:
+        if "hill" in methods and "elev" in type:
             helev_results = [None]*average_over_X_repeats
         if "decrmut" in methods:
             decrmut_results = [None]*average_over_X_repeats
+        if "hill" in methods and "ash" in type:
+            ashclimber_results = [None]*average_over_X_repeats
         for method in methods:
-            if method == "ppa":
+            if method == "ppa" and type == "elev":
                 #line length plot
                 for k in range(average_over_X_repeats):
+                    print("generation "+str(k))
                     print("repeat number", k, "of netlist", net)
                     ppa_results[k] = ppa.PPA_data(net)
                 ppa_iteration_sizes = [0]*average_over_X_repeats
                 for k in range(average_over_X_repeats):
                     ppa_iteration_sizes[k] = len(ppa_results[k][0])-1
-                ppa_average_lengths = [0]*max(ppa_iteration_sizes)
+                ppa_average_lengths = [0]*min(ppa_iteration_sizes)
                 for k in range(average_over_X_repeats):
-                    for i in range(len(ppa_results[k][0])-1):
+                    for i in range(len(ppa_average_lengths)):
                         ppa_average_lengths[i] += ppa_results[k][0][i]
                 ppa_iteration_sizes.sort()
                 for k in range(len(ppa_average_lengths)):
@@ -39,7 +43,7 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
                         del ppa_iteration_sizes[0]
                         print(ppa_iteration_sizes)
                     ppa_average_lengths[k] = ppa_average_lengths[k]/len(ppa_iteration_sizes)
-                ax.plot(ppa_average_lengths, 'g')
+                ax.plot(ppa_average_lengths, 'b')
 
                 # generation point plot
                 ppa_generation_amount = [0]*average_over_X_repeats
@@ -82,13 +86,65 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
                 best_height = combined_height_order[0][0]
                 best_order = combined_height_order[0][1]
                 best_length = best_lengths[0]
-                ppa_text = "for netlist " + str(net) + ", using the plant propagation algorithm, the constraint was first satisfied at " + str(ppa_first_csa) +"\n" + \
+                ppa_text = "for netlist " + str(net) + ", using the plant propagation algorithm + elevator, the constraint was first satisfied at " + str(ppa_first_csa) +"\n" + \
                 "the best order is: " + str(best_order) + "\n" + \
                 "the best height is: " + str(best_height) + "\n" + \
                 "the best length is: " + str(best_length) + "\n"
                 textfile.write(ppa_text)
 
-            if method == "helev":
+            if method == "ppa" and type == "ash":
+                #line length plot
+                for k in range(average_over_X_repeats):
+                    print("repeat number", k, "of netlist", net)
+                    ppa_results[k] = ash.PPA_data(net)
+                ppa_iteration_sizes = [0]*average_over_X_repeats
+                for k in range(average_over_X_repeats):
+                    ppa_iteration_sizes[k] = len(ppa_results[k][0])-1
+                ppa_average_lengths = [0]*min(ppa_iteration_sizes)
+                for k in range(average_over_X_repeats):
+                    for i in range(len(ppa_average_lengths)):
+                        ppa_average_lengths[i] += ppa_results[k][0][i]
+                ppa_iteration_sizes.sort()
+                for k in range(len(ppa_average_lengths)):
+                    print("ok")
+                    if k == ppa_iteration_sizes[0]:
+                        del ppa_iteration_sizes[0]
+                        print(ppa_iteration_sizes)
+                    ppa_average_lengths[k] = ppa_average_lengths[k]/len(ppa_iteration_sizes)
+                ax.plot(ppa_average_lengths, 'b')
+
+                # generation point plot
+                ppa_generation_amount = [0]*average_over_X_repeats
+                for k in range(average_over_X_repeats):
+                    ppa_generation_amount[k] = len(ppa_results[k][1])
+                ppa_average_generation_points = [0]*max(ppa_generation_amount)
+                for k in range(average_over_X_repeats):
+                    for i in range(len(ppa_results[k][1])-1):
+                        ppa_average_generation_points[i] += ppa_results[k][1][i]
+                for i in range(len(ppa_average_generation_points)-1):
+                    ppa_average_generation_points[i] = ppa_average_generation_points[i]/average_over_X_repeats
+                for xc in ppa_average_generation_points:
+                    ax.axvline(x=xc, color='g')
+
+                #data
+                best_lengths = []
+                for k in range(average_over_X_repeats):
+                    best_lengths.append(ppa_results[k][4])
+                best_orders = []
+                for k in range(average_over_X_repeats):
+                    best_orders.append(ppa_results[k][3])
+                #sort
+                best_lengths, best_orders = (list(x) for x in zip(
+                    *sorted(zip(best_lengths, best_orders),
+                            key=lambda pair: pair[0])))
+                best_order = best_orders[0]
+                best_length = best_lengths[0]
+                ppa_text = "for netlist " + str(net) + ", using the A star heatmap + plant propagation algorithm, \n" + \
+                "the best order is: " + str(best_order) + "\n" + \
+                "the best length is: " + str(best_length) + "\n"
+                textfile.write(ppa_text)
+
+            if method == "hill" and type == "elev":
                 for k in range(average_over_X_repeats):
                     helev_results[k] = eh.hill_climber_data(net)
                 # line length plot
@@ -135,12 +191,58 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
                 best_order = combined_height_order[0][1]
                 best_length = best_lengths[0]
                 helev_text = "for netlist " + str(
-                    net) + ", using the hillclimber algorithm, the constraint was first satisfied at " + str(
+                    net) + ", using the hillclimber + elevator algorithm, the constraint was first satisfied at " + str(
                     helev_first_csa) + "\n" + \
                            "the best order is: " + str(best_order) + "\n" + \
                            "the best height is: " + str(best_height) + "\n" + \
                            "the best length is: " + str(best_length) + "\n"
                 textfile.write(helev_text)
+
+
+            if method == "hill" and type == "ash":
+                for k in range(average_over_X_repeats):
+                    ashclimber_results[k] = ash.hill_climber_data(net)
+                    print("ok")
+                # line length plot
+                iteration_amount = len(ashclimber_results[0][0])-1
+                ashclimber_average_lengths = [0]*iteration_amount
+                for k in range(average_over_X_repeats):
+                    for i in range(len(ashclimber_results[k][0]) - 1):
+                        ashclimber_average_lengths[i] += ashclimber_results[k][0][i]
+                for k in range(len(ashclimber_average_lengths)):
+                    ashclimber_average_lengths[k] = ashclimber_average_lengths[k] / average_over_X_repeats
+                ax.plot(ashclimber_average_lengths)
+
+
+                # earliest/average first constraint satisfaction
+                first_constraint_satisfaction_list = []
+                for k in range(average_over_X_repeats):
+                    first_constraint_satisfaction_list.append(
+                        ashclimber_results[k][1])
+                # for earliest use min(...), for average use sum(...)/average_over..
+                #ax.axhline(sum(
+                #    first_constraint_satisfaction_list) / average_over_X_repeats,
+                #            color='g')
+
+                # data possibilities
+                best_lengths = []
+                for k in range(average_over_X_repeats):
+                    best_lengths.append(ashclimber_results[k][2])
+                best_orders = []
+                for k in range(average_over_X_repeats):
+                    best_orders.append(ashclimber_results[k][1])
+                # sort
+                best_lengths, combined_height_order = (list(x) for x in zip(
+                    *sorted(zip(best_lengths, best_orders),
+                            key=lambda pair: pair[0])))
+                best_order = best_orders[0]
+                best_length = best_lengths[0]
+                helev_text = "for netlist " + str(
+                    net) + ", using the A star heatmap + hillclimber algorithm," + "\n" + \
+                           "the best order is: " + str(best_order) + "\n" + \
+                           "the best length is: " + str(best_length) + "\n"
+                textfile.write(helev_text)
+
 
             if method == "decrmut":
                 for k in range(average_over_X_repeats):
@@ -149,9 +251,9 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
                 decrmut_iteration_sizes = [0]*average_over_X_repeats
                 for k in range(average_over_X_repeats):
                     decrmut_iteration_sizes[k] = len(decrmut_results[k][0])-1
-                decrmut_average_lengths = [0]*max(decrmut_iteration_sizes)
+                decrmut_average_lengths = [0]*min(decrmut_iteration_sizes)
                 for k in range(average_over_X_repeats):
-                    for i in range(len(decrmut_results[k][0])-1):
+                    for i in range(len(decrmut_average_lengths)):
                         decrmut_average_lengths[i] += decrmut_results[k][0][i]
                 decrmut_iteration_sizes.sort()
                 for k in range(len(decrmut_average_lengths)-0):
@@ -170,8 +272,8 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
                         decrmut_average_generation_points[i] += decrmut_results[k][1][i]
                 for i in range(len(decrmut_average_generation_points)-1):
                     decrmut_average_generation_points[i] = decrmut_average_generation_points[i]/average_over_X_repeats
-                for xc in decrmut_average_generation_points:
-                    ax.axvline(x=xc, color='c')
+                #for xc in decrmut_average_generation_points:
+                #    ax.axvline(x=xc, color='c')
 
                 #earliest/average first constraint satisfaction
                 first_constraint_satisfaction_list = []
@@ -225,8 +327,6 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
         plt.ylabel('length')
         plt.xlabel('iterations')
         fig.savefig(filename)
-        plt.clf()
-
 
 
 #main(wireList, gatesList, size, Dimensions)
@@ -241,4 +341,4 @@ def create_graph(netlist_list, average_over_X_repeats, methods, standardOn=True)
 # decrmut = decreasing mutations
 # standardOn=True geeft een horizontale lijn van het resultaat uit jochem's algoritme
 # don't forget: meerdere methods geeft een zooi.
-create_graph([6], 4, ["ppa"], standardOn=True)
+create_graph([3], 4, ["ppa"], "elev")

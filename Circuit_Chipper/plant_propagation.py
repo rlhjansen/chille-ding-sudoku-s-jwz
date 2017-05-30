@@ -892,6 +892,7 @@ def PPA_data(net, maxdistance=8, generations=50, initialpopulation=200,
             if order not in orderlist:
                 orderlist.append(order)
     delList = []
+    print("dellist started")
     for i in range(len(orderlist) - 1):
         grid.reset()
         grid.reserve_gates()
@@ -905,8 +906,7 @@ def PPA_data(net, maxdistance=8, generations=50, initialpopulation=200,
             print("netlist is:", net)
             print("Height is: ", height)
             print("Wire_length", wire_length)
-            print("manhattan distance:", total_manhat(grid.wires))
-            print(resultlist, orderlist)
+            print()
         if height > 17:
             delList.append(i)
         if height < 18:
@@ -918,9 +918,9 @@ def PPA_data(net, maxdistance=8, generations=50, initialpopulation=200,
     for i in delList:
         del resultlist[i]
         del orderlist[i]
-        del complete_lengthlist[i]
     currentplants = natural_selection(orderlist, resultlist, survivalrate)
     for i in range(generations - 1):
+        print("generation is ", i)
         generationpoints.append(len(complete_lengthlist))
         newplants = []
         newresults = []
@@ -933,9 +933,7 @@ def PPA_data(net, maxdistance=8, generations=50, initialpopulation=200,
                 if plant not in newplants:
                     newplants.append(plant)
         delList = []
-        i = 0
         for plant in newplants:
-            i += 1
             grid.reset()
             grid.reserve_gates()
             grid.wires = plant
@@ -957,12 +955,11 @@ def PPA_data(net, maxdistance=8, generations=50, initialpopulation=200,
 
             newresults.append(wirelength)
         delList.reverse()
+        complete_lengthlist.extend(newresults)
+        generationpoints.append(len(complete_lengthlist))
         for i in delList:
             del newresults[i]
             del newplants[i]
-            del complete_lengthlist[i+generationpoints[-1]]
-        complete_lengthlist.extend(newresults)
-        generationpoints.append(len(complete_lengthlist))
         currentplants = natural_selection(newplants, newresults,
                                               survivalrate)
     grid.reset()
@@ -972,8 +969,6 @@ def PPA_data(net, maxdistance=8, generations=50, initialpopulation=200,
     best_length = total_length(grid.wires)
     return [returnlist, generationpoints, height_is_satisfied,
                 currentplants[0], best_height, best_length]
-
-
 
 #net, maxdistance, generations, initialpopulation, survivalrate, minchildren, maxchildren, saltnumber: empty = testrun
 #PPA_graph([6,6,6,6,6], 2,1,4,1,1,1,2)

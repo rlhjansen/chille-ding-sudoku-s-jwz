@@ -947,5 +947,4 @@ def random_orders_data(net, methodstring, num_of_randoms=5000):
 
 
 #hill_climber(1, 2500)
-
-random_orders_data(6, "elev")
+random_orders_data(2, "elev")
