@@ -893,34 +893,38 @@ def random_orders_data(net, methodstring, num_of_randoms=5000):
         p = 'print_2'
     if methodstring == "elev":
         grid = eval("Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
-    elif methodstring == "A*Heat":
-        grid = eval("AstarH.Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
+    elif methodstring == "AsHeat":
+        AstarH.grid = eval("AstarH.Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
         heatlist = global_variables.heatdict[net]
-        grid.set_heat(0,heatlist)
+        AstarH.grid.set_heat([],heatlist)
     orderlist = [None] * num_of_randoms
     resultlist = [None] * num_of_randoms
     height_resultlist = [None] * num_of_randoms
     laid_resultlist = [None] * num_of_randoms
     for i in range(num_of_randoms):
-        order = []
-        shuffle(grid.wires)
-        for wire in grid.wires:
-            order.append(wire)
-        orderlist[i] = order
-    for i in range(num_of_randoms):
         if methodstring == "elev":
+            order = []
+            shuffle(grid.wires)
+            for wire in grid.wires:
+                order.append(wire)
+            orderlist[i] = order
             grid.reset()
             grid.reserve_gates()
             grid.wires = orderlist[i]
             height = elevator(grid)
             resultlist[i] = total_length(grid.wires)
             height_resultlist[i] = height
-        elif methodstring == "A*Heat":
+        elif methodstring == "AsHeat":
+            order = []
+            shuffle(AstarH.grid.wires)
+            for wire in AstarH.grid.wires:
+                order.append(wire)
+            orderlist[i] = order
             AstarH.grid.reset()
             AstarH.grid.reserve_gates()
             AstarH.grid.wires = orderlist[i]
-            laid_resultlist[i] = AstarH.a_star_heat(grid)
-            resultlist[i] = AstarH.total_length(grid.wires)
+            laid_resultlist[i] = AstarH.a_star_heat(AstarH.grid)
+            resultlist[i] = AstarH.total_length(AstarH.grid.wires)
     random_mean = mean(resultlist)
     random_variance = variance(resultlist)
     random_height_mean = mean(height_resultlist)
@@ -929,7 +933,7 @@ def random_orders_data(net, methodstring, num_of_randoms=5000):
         "mean length is " + str(random_mean) + "\n" + \
         "mean height is " + str(random_height_mean) + "\n" + \
         "length variance is" + str(random_variance) + "\n"
-    elif methodstring == "A*Heat":
+    elif methodstring == "AsHeat":
         laid_mean = mean(laid_resultlist)
         text = "netlist is " + str(net) + "\n" + \
         "mean length is " + str(random_mean) + "\n" + \
@@ -939,7 +943,7 @@ def random_orders_data(net, methodstring, num_of_randoms=5000):
     writefile.close()
     if methodstring == "elev":
         return [random_mean, random_variance, random_height_mean]
-    elif methodstring == "A*Heat":
+    elif methodstring == "AsHeat":
         return [random_mean, random_variance, laid_mean]
 
 
@@ -947,4 +951,5 @@ def random_orders_data(net, methodstring, num_of_randoms=5000):
 
 
 #hill_climber(1, 2500)
-random_orders_data(2, "elev")
+
+random_orders_data(2, "AsHeat")
