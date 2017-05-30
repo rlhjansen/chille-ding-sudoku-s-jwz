@@ -1137,7 +1137,7 @@ def main(filename, main_algorithm, net, size):
         get_input()
 
 # netlist_list = [2,4,3], average_.. = 5, methods = ["ppa","hill", "decrmut"], type = "elev" or "ash"
-create_graph([1], 4, ["hill"],"ash")
+create_graph([1], 4, ["ppa"],"ash")
 
 #main("netlist_1_['ppa']repeats_is_4salt_is5312324.txt", "elev", 1, size)
 

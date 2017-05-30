@@ -853,7 +853,7 @@ def success(print_n, net, heat):
     print('heat', heat, 'has a succes of', str(percentage) + '%')
 
 
-if False:
-    success('print_1', netlists.netlist_1, [0, 3])
-else:
-    hill_heat('print_1', netlists.netlist_2, 10000)
+#if False:
+#    success('print_1', netlists.netlist_1, [0, 3])
+#else:
+#    hill_heat('print_1', netlists.netlist_2, 10000)

@@ -902,7 +902,11 @@ def random_orders_data(net, methodstring, num_of_randoms=5000):
     height_resultlist = [None] * num_of_randoms
     laid_resultlist = [None] * num_of_randoms
     for i in range(num_of_randoms):
-        orderlist[i] = shuffle(grid.wires)
+        order = []
+        shuffle(grid.wires)
+        for wire in grid.wires:
+            order.append(wire)
+        orderlist[i] = order
     for i in range(num_of_randoms):
         if methodstring == "elev":
             grid.reset()
@@ -944,3 +948,4 @@ def random_orders_data(net, methodstring, num_of_randoms=5000):
 
 #hill_climber(1, 2500)
 
+random_orders_data(6, "elev")
