@@ -739,20 +739,22 @@ def makeNewWire(wire, size, dimensions):
     #"""
 
 # input examples
-# netlist_list = [2,4,3], average_.. = 5, methods = ["ppa","helev", "decrmut"], type = "elev" or "ash"
+# netlist_list = [2,4,3], average_.. = 5, methods = ["ppa","hill", "decrmut"], type = "elev" or "ash"
 def create_graph(netlist_list, average_over_X_repeats, methods, type, standardOn=True):
     salt = str(randint(0,20000000))
     for net in netlist_list:
-        filename = "netlist_" + str(net) +"_" + str(methods) + "repeats_is_" + str(average_over_X_repeats) + "salt_is" + salt + ".png"
-        textfilename = "netlist_" + str(net) +"_" + str(methods) + "repeats_is_" + str(average_over_X_repeats) + "salt_is" + salt + ".txt"
+        filename = "netlist_" + str(net) +"_" + str(methods) + str(type) + "repeats_is_" + str(average_over_X_repeats) + "salt_is" + salt + ".png"
+        textfilename = "netlist_" + str(net) +"_" + str(methods) + str(type) + "repeats_is_" + str(average_over_X_repeats) + "salt_is" + salt + ".txt"
         textfile = open(textfilename, 'w')
         fig, ax = plt.subplots()
-        if "ppa" in methods:
+        if "ppa" in methods and "elev" in type:
             ppa_results = [None]*average_over_X_repeats
-        if "helev" in methods:
+        if "hill" in methods and "elev" in type:
             helev_results = [None]*average_over_X_repeats
         if "decrmut" in methods:
             decrmut_results = [None]*average_over_X_repeats
+        if "hill" in methods and "ash" in type:
+            ashclimber_results = [None]*average_over_X_repeats
         for method in methods:
             if method == "ppa" and type == "elev":
                 #line length plot
@@ -816,7 +818,7 @@ def create_graph(netlist_list, average_over_X_repeats, methods, type, standardOn
                 best_height = combined_height_order[0][0]
                 best_order = combined_height_order[0][1]
                 best_length = best_lengths[0]
-                ppa_text = "for netlist " + str(net) + ", using the plant propagation algorithm, the constraint was first satisfied at " + str(ppa_first_csa) +"\n" + \
+                ppa_text = "for netlist " + str(net) + ", using the plant propagation algorithm + elevator, the constraint was first satisfied at " + str(ppa_first_csa) +"\n" + \
                 "the best order is: " + str(best_order) + "\n" + \
                 "the best height is: " + str(best_height) + "\n" + \
                 "the best length is: " + str(best_length) + "\n"
@@ -869,12 +871,12 @@ def create_graph(netlist_list, average_over_X_repeats, methods, type, standardOn
                             key=lambda pair: pair[0])))
                 best_order = best_orders[0]
                 best_length = best_lengths[0]
-                ppa_text = "for netlist " + str(net) + ", using the plant propagation algorithm, \n" + \
+                ppa_text = "for netlist " + str(net) + ", using the A star heatmap + plant propagation algorithm, \n" + \
                 "the best order is: " + str(best_order) + "\n" + \
                 "the best length is: " + str(best_length) + "\n"
                 textfile.write(ppa_text)
 
-            if method == "hillclimber" and type == "elev":
+            if method == "hill" and type == "elev":
                 for k in range(average_over_X_repeats):
                     helev_results[k] = eh.hill_climber_data(net)
                 # line length plot
@@ -921,7 +923,7 @@ def create_graph(netlist_list, average_over_X_repeats, methods, type, standardOn
                 best_order = combined_height_order[0][1]
                 best_length = best_lengths[0]
                 helev_text = "for netlist " + str(
-                    net) + ", using the hillclimber algorithm, the constraint was first satisfied at " + str(
+                    net) + ", using the hillclimber + elevator algorithm, the constraint was first satisfied at " + str(
                     helev_first_csa) + "\n" + \
                            "the best order is: " + str(best_order) + "\n" + \
                            "the best height is: " + str(best_height) + "\n" + \
@@ -929,57 +931,47 @@ def create_graph(netlist_list, average_over_X_repeats, methods, type, standardOn
                 textfile.write(helev_text)
 
 
-            if method == "hillclimber" and type == "ash":
+            if method == "hill" and type == "ash":
                 for k in range(average_over_X_repeats):
-                    helev_results[k] = ash.hill_climber_data(net)
+                    ashclimber_results[k] = ash.hill_climber_data(net)
+                    print("ok")
                 # line length plot
-                iteration_amount = len(helev_results[0][0])-1
-                helev_average_lengths = [0]*iteration_amount
+                iteration_amount = len(ashclimber_results[0][0])-1
+                ashclimber_average_lengths = [0]*iteration_amount
                 for k in range(average_over_X_repeats):
-                    for i in range(len(helev_results[k][0]) - 1):
-                        helev_average_lengths[i] += helev_results[k][0][i]
-                for k in range(len(helev_average_lengths)):
-                    helev_average_lengths[k] = helev_average_lengths[k] / average_over_X_repeats
-                ax.plot(helev_average_lengths)
+                    for i in range(len(ashclimber_results[k][0]) - 1):
+                        ashclimber_average_lengths[i] += ashclimber_results[k][0][i]
+                for k in range(len(ashclimber_average_lengths)):
+                    ashclimber_average_lengths[k] = ashclimber_average_lengths[k] / average_over_X_repeats
+                ax.plot(ashclimber_average_lengths)
 
 
                 # earliest/average first constraint satisfaction
                 first_constraint_satisfaction_list = []
                 for k in range(average_over_X_repeats):
                     first_constraint_satisfaction_list.append(
-                        helev_results[k][1])
+                        ashclimber_results[k][1])
                 # for earliest use min(...), for average use sum(...)/average_over..
                 #ax.axhline(sum(
                 #    first_constraint_satisfaction_list) / average_over_X_repeats,
                 #            color='g')
 
                 # data possibilities
-                best_heights = []
-                for k in range(average_over_X_repeats):
-                    best_heights.append(helev_results[k][3])
                 best_lengths = []
                 for k in range(average_over_X_repeats):
-                    best_lengths.append(helev_results[k][4])
+                    best_lengths.append(ashclimber_results[k][2])
                 best_orders = []
                 for k in range(average_over_X_repeats):
-                    best_orders.append(helev_results[k][2])
-                combined_height_order = []
-                for k in range(average_over_X_repeats):
-                    combined_height_order.append(
-                        [best_heights[k], best_orders[k]])
+                    best_orders.append(ashclimber_results[k][1])
                 # sort
                 best_lengths, combined_height_order = (list(x) for x in zip(
-                    *sorted(zip(best_lengths, combined_height_order),
+                    *sorted(zip(best_lengths, best_orders),
                             key=lambda pair: pair[0])))
-                helev_first_csa = min(first_constraint_satisfaction_list)
-                best_height = combined_height_order[0][0]
-                best_order = combined_height_order[0][1]
+                best_order = best_orders[0]
                 best_length = best_lengths[0]
                 helev_text = "for netlist " + str(
-                    net) + ", using the hillclimber algorithm, the constraint was first satisfied at " + str(
-                    helev_first_csa) + "\n" + \
+                    net) + ", using the A star heatmap + hillclimber algorithm," + "\n" + \
                            "the best order is: " + str(best_order) + "\n" + \
-                           "the best height is: " + str(best_height) + "\n" + \
                            "the best length is: " + str(best_length) + "\n"
                 textfile.write(helev_text)
 
@@ -1144,8 +1136,11 @@ def main(filename, main_algorithm, net, size):
         draw(dimensions, gates)
         get_input()
 
-#create_graph([6], 4, ["decrmut"], standardOn=True)
+# netlist_list = [2,4,3], average_.. = 5, methods = ["ppa","hill", "decrmut"], type = "elev" or "ash"
+create_graph([1], 4, ["hill"],"ash")
 
 #main("netlist_1_['ppa']repeats_is_4salt_is5312324.txt", "elev", 1, size)
 
 #print(TextToWireList("netlist_1_['ppa']repeats_is_4salt_is5312324.txt", "elev", 1))
+
+

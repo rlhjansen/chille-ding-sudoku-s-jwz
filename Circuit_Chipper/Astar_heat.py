@@ -739,10 +739,90 @@ def PPA_data(net, maxdistance=8, generations=50, initialpopulation=200,
     grid.reset()
     grid.reserve_gates()
     grid.wires = currentplants[0]
-    best_laid = a_star_heat(grid)
     best_length = total_length(grid.wires)
     return [returnlist, generationpoints, laidlist,
                 currentplants[0], best_length]
+
+def mutate_order(order):
+    i_1 = randint(0, len(order) - 1)
+    i_2 = randint(0, len(order) - 1)
+    wire_1 = order[i_1]
+    wire_2 = order[i_2]
+
+    mut_order = []
+    index = 0
+    while index < len(order):
+        if index == i_1:
+            mut_order.append(wire_2)
+        elif index == i_2:
+            mut_order.append(wire_1)
+        else:
+            mut_order.append(order[index])
+
+        index += 1
+
+    return mut_order
+
+
+def hill_climber_data(net, repeats=5000):
+    complete_lengthlist = []
+    height_is_satisfied = 0
+    print('netlist', net)
+    p = ''
+
+    if net < 4:
+        p = 'print_1'
+    else:
+        p = 'print_2'
+
+    grid = eval("Grid(\'" + p + "\', netlists.netlist_" + str(net) + ")")
+    grid.set_heat([], gv.heatdict[net])
+    grid.reset()
+    grid.reserve_gates()
+    shuffle(grid.wires)
+    wire_amount = len(grid.wires)
+    best_order = []
+    for wire in grid.wires:
+        best_order.append(wire)
+
+    laid = a_star_heat(grid)
+    if laid < wire_amount:
+        best_length = 1000
+    else:
+        best_length = total_length(grid.wires)
+    complete_lengthlist.append(best_length) # aangepast: new_length -> best_length
+
+    if False:
+        print('Order 1 =', best_order)
+        print('length =', best_length)
+        print()
+    grid.reset()
+
+    for rep in range(repeats - 1):
+        grid.reserve_gates()
+        new_order = mutate_order(best_order)
+        grid.wires = new_order
+        laid = a_star_heat(grid)
+        new_length = total_length(grid.wires)
+        if laid == wire_amount and new_length < best_length:
+            best_length = new_length
+            best_order = new_order
+        complete_lengthlist.append(best_length) # aangepast: new_length -> best_length
+
+        if True:
+            print("netlist is", net)
+            print('Order', str(rep), '=', new_order)
+            print('Length =', new_length)
+
+        # print()
+        grid.reset()
+
+    print('Best Order =', best_order)
+    print('Best Length =', best_length)
+    print()
+    return [complete_lengthlist, best_order, best_length]
+
+
 
 
 # Find the wire order form a file and turn it into a list of wire names.
