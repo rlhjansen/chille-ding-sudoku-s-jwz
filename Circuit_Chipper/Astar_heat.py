@@ -455,7 +455,6 @@ def mutate_heat(heat_list):
 # Find a heat_list that can solve the netlist, using hillclimber.
 def hill_heat(print_n, netlist, iterations):
     grid = Grid(print_n, netlist)
-    rn.shuffle(grid.wires)
     grid.reserve_gates()
     best_heat = ()
     best_layed = 0
@@ -473,17 +472,27 @@ def hill_heat(print_n, netlist, iterations):
         layed = a_star_all(grid.wires)
         new_layed = layed[0]
         past_heats.add(new_heat)
+        new_layed = 0
+        not_layed = []
+
+        # Check the heat for 5 different wire sorts
+        for _ in range(5):
+            rn.shuffle(grid.wires)
+            layed = a_star_all(grid.wires)
+            new_layed += layed[0]
+            not_layed += layed[1]
+            grid.reset(reserve=True)
 
         # Check if the new heat is lower than the best.
-        if layed[1] and new_layed >= best_layed:
+        if new_layed > best_layed:
             best_layed = new_layed
             best_heat = new_heat
             print('better layed:', new_layed)
-            print('not layed:', layed[1])
+            print('not layed:', not_layed)
             print('new heat:', best_heat)
 
         # Try to simplify the heat if the netlist is solved.
-        elif layed[1] == [] and (len(new_heat) < len(best_heat) or
+        elif new_layed == best_layed and (len(new_heat) < len(best_heat) or
             (sum(new_heat) <= sum(best_heat) and
              len(new_heat) <= len(best_heat))):
 
@@ -492,7 +501,8 @@ def hill_heat(print_n, netlist, iterations):
             print('better layed:', new_layed)
             print('new heat:', best_heat)
 
-        grid.reset(reserve=True)
+        else:
+            print(new_layed, 'meh', new_heat)
 
     print('best_layed =', best_layed)
     print('best heat =', best_heat)
@@ -532,8 +542,9 @@ def total_length(wires):
 
 
 # Try to lay all the wires using a-star. Return how many were layed.
-def a_star_heat(grid):
+def a_star_heat_v2(grid):
     num_layed = 0
+    not_layed = []
 
     for wire in grid.wires:
         wire.remove()
@@ -542,6 +553,26 @@ def a_star_heat(grid):
         if route != False:
             wire.lay(route)
             num_layed += 1
+        else:
+            not_layed.append(wire)
+
+    return num_layed, not_layed
+
+
+# Try to lay all the wires using a-star. Return how many were layed.
+def a_star_heat(grid):
+    num_layed = 0
+    not_layed = []
+
+    for wire in grid.wires:
+        wire.remove()
+        route = wire.a_star()
+
+        if route != False:
+            wire.lay(route)
+            num_layed += 1
+        else:
+            not_layed.append(wire)
 
     return num_layed
 
@@ -714,7 +745,7 @@ def PPA_data(net, maxdistance=8, generations=50, initialpopulation=200,
                 currentplants[0], best_length]
 
 
-#
+# Find the wire order form a file and turn it into a list of wire names.
 def file_to_list(file_name):
     file = open(file_name)
     file.readline()
@@ -724,6 +755,25 @@ def file_to_list(file_name):
     return string.split()
 
 
-# hill_heat('print_1', netlists.netlist_3, 10000)
+# Try to find out how successful a heat is.
+def success(print_n, net, heat):
+    percentage = 0
+    grid = Grid(print_n, net)
 
-#file_to_list('netlist_1_[\'helev\']repeats_is_4salt_is116.txt')
+    for _ in range(100):
+        rn.shuffle(grid.wires)
+        grid.reserve_gates()
+        grid.set_heat([], heat)
+
+        if not a_star_heat(grid)[1]:
+            percentage += 1
+
+        grid.reset(reserve=True)
+
+    print('heat', heat, 'has a succes of', str(percentage) + '%')
+
+
+if False:
+    success('print_1', netlists.netlist_1, [0, 3])
+else:
+    hill_heat('print_1', netlists.netlist_2, 10000)
